@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
   Archive,
   ChevronDown,
@@ -26,6 +26,13 @@ import { AgentOverflowMenu } from './AgentLifecycle';
 import { useFloor } from './data/hive';
 import { NAV, hrefFor, type PaperRoute } from './routes';
 import { copyFor, currentLang } from './screens/archived/copy';
+
+/** Header-only notes floor so 4 agent rows stay visible at 1024×640. */
+const NOTES_HEAD = 40;
+/** Spec: notes start at ~3 rows (search + 3 titles). */
+const NOTES_DEFAULT = 132;
+/** 4 actual name+status rows + Agents label + two project headers + padding. */
+const AGENTS_MIN = 280;
 
 const ICONS: Record<string, typeof Home> = {
   home: Home,
@@ -137,7 +144,10 @@ function AgentRow({
         <>
           <span className="paper-agent-copy">
             <span className="paper-agent-name">{agent.name}</span>
-            <span className="paper-agent-live">{agent.line}</span>
+            <span className="paper-agent-live" title={`${agent.status} · ${agent.line}`}>
+              <span className="paper-agent-status">{agent.status}</span>
+              <span className="paper-agent-line">{agent.line}</span>
+            </span>
           </span>
           {agent.askedYou ? (
             <Badge tone="danger" className="paper-agent-asked">
@@ -202,7 +212,7 @@ export function Sidebar({
   const liveGrouped = grouped.map((g) => ({ ...g, items: g.items.filter((a) => !archivedIds.has(a.id)) }));
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [notesH, setNotesH] = useState(() => {
-    try { return Number(localStorage.getItem('paper.notesHeight')) || 168; } catch { return 168; }
+    try { return Number(localStorage.getItem('paper.notesHeight')) || NOTES_DEFAULT; } catch { return NOTES_DEFAULT; }
   });
   const [notesOpen, setNotesOpen] = useState(() => {
     try { return localStorage.getItem('paper.notesCollapsed') !== '1'; } catch { return true; }
@@ -214,6 +224,34 @@ export function Sidebar({
     try { localStorage.setItem('paper.notesHeight', String(h)); } catch { /* noop */ }
   }, []);
 
+  const notesMaxFor = useCallback((sidebarH: number): number => {
+    const root = sidebarRef.current;
+    if (!root) return NOTES_DEFAULT;
+    const agents = root.querySelector('.paper-sidebar-agents') as HTMLElement | null;
+    let chrome = 0;
+    for (const child of Array.from(root.children)) {
+      if (child === agents || (child as HTMLElement).classList.contains('paper-sidebar-notes')) continue;
+      chrome += (child as HTMLElement).offsetHeight;
+    }
+    return Math.max(NOTES_HEAD, sidebarH - chrome - AGENTS_MIN);
+  }, []);
+
+  useLayoutEffect(() => {
+    const root = sidebarRef.current;
+    if (!root || collapsed) return;
+    const apply = (): void => {
+      const max = notesMaxFor(root.clientHeight);
+      setNotesH((prev) => {
+        const next = Math.min(Math.max(prev, NOTES_HEAD), max);
+        return next === prev ? prev : next;
+      });
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(root);
+    return () => ro.disconnect();
+  }, [collapsed, notesOpen, agentsOnly, notesMaxFor]);
+
   const onSplitDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     splitDrag.current = true;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -222,9 +260,10 @@ export function Sidebar({
   const onSplitMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!splitDrag.current || !sidebarRef.current) return;
     const rect = sidebarRef.current.getBoundingClientRect();
-    const next = Math.min(Math.max(rect.bottom - e.clientY, 132), Math.max(132, rect.height - 220));
+    const max = notesMaxFor(rect.height);
+    const next = Math.min(Math.max(rect.bottom - e.clientY, NOTES_HEAD), max);
     setNotesH(next);
-  }, []);
+  }, [notesMaxFor]);
 
   const onSplitUp = useCallback(() => {
     if (!splitDrag.current) return;
@@ -379,8 +418,13 @@ export function Sidebar({
           onPointerMove={onSplitMove}
           onPointerUp={onSplitUp}
           onKeyDown={(e) => {
-            if (e.key === 'ArrowUp') setNotesH((h) => { const n = Math.min(h + 16, 360); persistNotes(n); return n; });
-            if (e.key === 'ArrowDown') setNotesH((h) => { const n = Math.max(h - 16, 132); persistNotes(n); return n; });
+            if (e.key === 'ArrowUp') setNotesH((h) => {
+              const max = sidebarRef.current ? notesMaxFor(sidebarRef.current.clientHeight) : 360;
+              const n = Math.min(h + 16, max);
+              persistNotes(n);
+              return n;
+            });
+            if (e.key === 'ArrowDown') setNotesH((h) => { const n = Math.max(h - 16, NOTES_HEAD); persistNotes(n); return n; });
           }}
         />
       )}
