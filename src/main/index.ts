@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, nativeImage, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
 import {
   rmSync, existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
@@ -3089,13 +3089,15 @@ ipcMain.handle('session:resolveCwd', (_evt, sessionId: unknown) =>
   (typeof sessionId === 'string' ? resolveSessionCwd(sessionId) : null));
 
 // ─── IPC: clipboard ─────────────────────────────────────────────────────────
-ipcMain.handle('app:copyToClipboard', (_evt, text: unknown) => {
+// Electron 44: the main-process clipboard is async (readText/writeText return
+// Promises; readImage is gone, images come from clipboard.read()).
+ipcMain.handle('app:copyToClipboard', async (_evt, text: unknown) => {
   if (typeof text !== 'string') return { ok: false, error: 'invalid text' };
-  try { clipboard.writeText(text); return { ok: true }; }
+  try { await clipboard.writeText(text); return { ok: true }; }
   catch (e) { return { ok: false, error: e instanceof Error ? e.message : String(e) }; }
 });
-ipcMain.handle('app:readClipboard', () => {
-  try { return clipboard.readText(); } catch { return ''; }
+ipcMain.handle('app:readClipboard', async () => {
+  try { return await clipboard.readText(); } catch { return ''; }
 });
 // Same read, SYNCHRONOUS, for the terminal's paste shortcut.
 //
@@ -3105,8 +3107,15 @@ ipcMain.handle('app:readClipboard', () => {
 // which point the restore has already landed and we paste the PREVIOUS text.
 // A `sendSync` read completes inside the keydown handler, before the tool gets
 // a chance to put the old contents back.
+//
+// Electron 44 made readText async. The renderer's sendSync still blocks until
+// returnValue is assigned, so assigning it after the await keeps the paste
+// inside the keydown handler; the read itself starts immediately.
 ipcMain.on('app:readClipboardSync', (evt) => {
-  try { evt.returnValue = clipboard.readText(); } catch { evt.returnValue = ''; }
+  clipboard.readText().then(
+    (text) => { evt.returnValue = text; },
+    () => { evt.returnValue = ''; }
+  );
 });
 // NOTE: the terminal theme is mirrored into each agent's per-session Claude
 // settings at spawn (hive.ensureAgent theme option) — deliberately NOT via
@@ -3743,18 +3752,36 @@ ipcMain.handle('dialog:attachFiles', async (evt) => {
   return { ok: true as const, files: res.filePaths.map((p) => ({ path: p, name: basename(p) })) };
 });
 
+/** The first image on the clipboard as PNG bytes, or null when there is none.
+ *  Electron 44 replaced clipboard.readImage() with the async clipboard.read();
+ *  macOS screenshots arrive as image/png, other formats (image/tiff, …) are
+ *  converted through nativeImage. */
+async function readClipboardPng(): Promise<Buffer | null> {
+  for (const item of await clipboard.read()) {
+    const type = item.types.find((t) => t === 'image/png') ?? item.types.find((t) => t.startsWith('image/'));
+    if (!type) continue;
+    const data = await item.getType(type);
+    if (!(data instanceof Blob)) continue;
+    const bytes = Buffer.from(await data.arrayBuffer());
+    if (type === 'image/png') return bytes;
+    const img = nativeImage.createFromBuffer(bytes);
+    if (!img.isEmpty()) return img.toPNG();
+  }
+  return null;
+}
+
 // Persist the current native clipboard image to a temp PNG so a pasted
 // screenshot can be attached by PATH. Returns an error result when the
 // clipboard holds no image (e.g. a normal text paste).
 ipcMain.handle('clipboard:saveImage', async () => {
   try {
-    const img = clipboard.readImage();
-    if (img.isEmpty()) return { ok: false as const, error: 'no image in clipboard' };
+    const png = await readClipboardPng();
+    if (!png) return { ok: false as const, error: 'no image in clipboard' };
     const dir = join(app.getPath('temp'), 'cth-pastes');
     mkdirSync(dir, { recursive: true });
     const name = `paste-${Date.now()}.png`;
     const dest = join(dir, name);
-    writeFileSync(dest, img.toPNG());
+    writeFileSync(dest, png);
     return { ok: true as const, file: { path: dest, name } };
   } catch (e) {
     return { ok: false as const, error: e instanceof Error ? e.message : String(e) };
