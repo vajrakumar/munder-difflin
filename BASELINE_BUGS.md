@@ -538,3 +538,88 @@ None this run.
 - P1: 1 (Done column clipped / unscrolled)
 - P2: 5
 - Electron: not launched
+
+---
+
+## MDF-14 Orchestrator (paper.html#/orchestrator)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-f0fe09.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** (HEAD `232c9aaa`, merge `99b551c1 feat(ui): Orchestrator screen`) at `http://127.0.0.1:5182/paper.html#/orchestrator`. Developer gallery on :5179 left running. Evidence `/tmp/mdf14-qa/`. Chrome CDP 9340.
+
+PLAN §4.3.3: same as an agent room, plus a routing log, the board, breaker controls and a fleet budget chart.
+
+### What passed
+
+- `#/orchestrator` and `#/agent/god` both mount `data-orch=true` with six tabs: Overview, Messages, Tasks, Routing, Board, Control. Tablist `aria-label="Orchestrator panels"`. ⌘K **Open Orchestrator** lands on `#/orchestrator`. Sidebar Michael is `aria-current="page"`.
+- Agent-room chrome: h1 Michael, role Orchestrator, demo terminal `aria-label="Michael terminal"`, composer `aria-label="Message Michael"`, Enter-send as hive mail (`Sent to Michael's inbox.`). Messages count 12 → 13 after send.
+- Routing: 12 god-mail rows, `data-dir` in/out, act badges, subjects. Board: 2×2 To do / Doing / Blocked / Done, **Open Tasks** → `#/tasks`, card `#/tasks/MDF-12` opens the sheet. All four columns visible (unlike Tasks B-16-1).
+- Control: breaker `role="group"` `aria-label="Circuit breaker"` with `aria-pressed`; **Stop** is danger + `data-tone="danger"` + `role="status"` note; localStorage `paper.orch.breaker`. Fleet meters `role="meter"` named per agent. Restart copy and Configuration (Engine / Model / Mode) present when the pane is tall enough.
+- ArrowRight moves Overview → Messages → Tasks → **Routing** (extra tabs are in the same Radix list). RTL mirrors the two-pane room. Dark / hc paint. `prefers-reduced-motion` kills meter transition. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-14-1 · Default shell (and 1024×640) stacks the room; the terminal becomes a strip
+
+**Flow:** Paper Orchestrator at 1280×900 with the inspector open (shell default) and at min 1024×640.  
+**Expected:** PLAN — terminal on the left, panels on the right. Min window 1024×640 still usable.  
+**Actual:**
+- `.pa-root` is `container: room / inline-size`. With sidebar + inspector the room is **661px**. `@container room (max-width: 760px)` forces one column: terminal on top (**325×661**), panels below.
+- At **1024×640** the room is **405px**. Terminal shows about one output line plus the composer; board cells are **183×71** and clip every title. Screenshots `01-overview.png`, `17-narrow-1024.png`.
+- Control’s **Restart orchestrator** sits below the fold in the stacked pane (CDP click at y=982 missed the 900px viewport; note stayed `Breaker → Stop`). Screenshot `07-control.png` cuts at Engine.
+- Hide inspector: room **994px**, grid `574px 420px`, two-pane as designed (`19-no-inspector.png`). The advertised layout is opt-in, not the default.
+
+**Severity: P1** (layout; the orchestrator’s primary surface is the terminal).
+
+### P2
+
+### B-14-2 · Mini-board silently drops cards after eight
+
+**Flow:** Orchestrator → Board.  
+**Expected:** column count matches the list, or an explicit “N more”.  
+**Actual:** heads say **TO DO 10** and **DONE 11**; `by[col].slice(0, 8)` renders 8. MDF-23 / MDF-25 (todo) and MDF-10 / MDF-36 / MDF-35 (done) never appear. No overflow hint. Screenshot `06-board.png`.
+
+**Severity: P2**
+
+### B-14-3 · Header says **working**; the line says idle
+
+**Flow:** `#/orchestrator` demo.  
+**Expected:** status badge, sidebar line and Overview lede agree.  
+**Actual:** `DEMO_AGENTS` god is `status: 'working'`. `DEFAULT_AGENTS` god is `status: 'idle'`, line **Waiting on the next brief**. Header badge **working**; sidebar + Overview use the idle line. Two demo tables, two truths.
+
+**Severity: P2**
+
+### B-14-4 · Fleet spend chart is a different roster than the floor
+
+**Flow:** Orchestrator → Control.  
+**Expected:** spend rows are the live/demo floor, including Kelly.  
+**Actual:** `DEFAULT_AGENTS.filter(a => a.costToday)` — five names, **$2.65**. Lede **4 live · 7 on the floor** (fixtures include Kelly + archived Researcher). Kelly has floor mail and a Doing card, **$0** on the chart. Meter `aria-valuemax` is the peer max (`1.4`), not a budget.
+
+**Severity: P2**
+
+### B-14-5 · Selected tab swallows the focus ring
+
+**Flow:** Tab to Overview, ArrowRight across the six tabs.  
+**Expected:** visible `--paper-focus-ring` (QA bar).  
+**Actual:** Radix activates on arrow, so the focused tab is always `[data-state=active]`. `.paper-tabs-trigger[data-state="active"] { box-shadow: var(--paper-elev-1) }` wins over `.pc-screen :where(button):focus-visible`. Computed shadow on Overview was the 1px elevation, not the ring. Screenshot `11-focus.png`.
+
+**Severity: P2** (a11y)
+
+### B-14-6 · RTL composer placeholder leads with a period
+
+**Flow:** `dir=rtl` on `#/orchestrator`.  
+**Expected:** “Message Michael. Paste or drop…” stays readable.  
+**Actual:** placeholder paints **“.Message Michael. Paste or drop images to attach”**. Status line **“.Sent to Michael's inbox.”** Screenshots `15-board-rtl.png`, `16-control-rtl.png`.
+
+**Severity: P2** (RTL)
+
+### MDF-14 counts
+
+- P0: 0
+- P1: 1 (stacked room / terminal strip)
+- P2: 5
+- Electron: not launched
