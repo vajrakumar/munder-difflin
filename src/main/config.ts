@@ -23,6 +23,7 @@ import {
   type OrgTriggerConfig,
   type WebhookTrigger
 } from '../shared/triggers';
+import type { AutomationGuards } from '../shared/automationGuard';
 
 /** A recurring auto-dispatched mission fired on an interval by the scheduler. */
 export interface ScheduledMission {
@@ -35,6 +36,8 @@ export interface ScheduledMission {
    *  `intervalMs` is deliberately left on the record so switching back restores
    *  the cadence the user had. See shared/weeklySchedule.ts. */
   weekly?: { days: number[]; minute: number };
+  /** Quiet hours + guardrails (MDF-17); see shared/automationGuard.ts. */
+  guards?: AutomationGuards;
   to: string;
   body: string;
   enabled: boolean;

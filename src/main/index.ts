@@ -19,6 +19,7 @@ import {
 } from './config';
 import { listDir, readFileText, readFileBinary, writeFileText, statAbs, expandTilde } from './fs';
 import { normalizeWeekly, weeklyDelayMs } from '../shared/weeklySchedule';
+import { budgetLine, evaluateGuards, normalizeGuards, startOfLocalDay } from '../shared/automationGuard';
 import {
   getBranch, getStatus, getLog, getBranches, getAheadBehind, isRepo, getDiff, mainRepoRoot,
   addWorktree, removeWorktree, worktreeHasUnintegratedWork, worktreeIsGcSafe,
@@ -38,7 +39,7 @@ import { listIssues, listCIRuns } from './github';
 import { SlackWebhookServer, SlackReplyServer, postSlackReply, type SlackEventFile } from './slack';
 import {
   WebhookServer,
-  type WebhookDispatch, type WebhookEndpointRef, type WebhookInbound, type WebhookTaskStatus
+  type WebhookDispatch, type WebhookEndpointRef, type WebhookGuardVerdict, type WebhookInbound, type WebhookTaskStatus
 } from './webhook';
 import {
   classifyInboundKind, isAutoAllowed,
@@ -698,6 +699,28 @@ function clearMissionTimers(): void {
   missionTimers.clear();
 }
 
+/** Real runs (not skips, dry runs or rejections) an automation made since
+ *  local midnight — the count `maxRunsPerDay` is checked against. Read from
+ *  the trigger ledger so schedules and webhooks share one source of truth. */
+function automationRunsToday(source: 'schedule' | 'webhook', id: string): number {
+  const since = startOfLocalDay(Date.now());
+  return listTriggerHistory().filter((e) => e.source === source && e.sourceId === id && e.at >= since
+    && e.direction === 'inbound'
+    && (e.decision === 'auto-allowed' || e.decision === 'approved' || e.decision === 'pending')).length;
+}
+
+/** One History row per schedule fire (MDF-17). Body is the mission text the
+ *  operator wrote; nothing secret ever rides on a mission. */
+function recordScheduleRun(m: ScheduledMission, decision: NonNullable<TriggerHistoryEntry['decision']>): void {
+  try {
+    appendTriggerHistory({
+      source: 'schedule', sourceId: m.id, sourceName: m.label, direction: 'inbound',
+      peer: 'scheduler', title: m.label, body: m.body || m.label, kind: 'directive', decision
+    });
+    notifyTriggerHistoryUpdated();
+  } catch { /* the ledger is best-effort */ }
+}
+
 /** Rebuild the scheduler from persisted config: clear every existing timer,
  *  then arm each enabled mission honoring its lastFiredAt — a setTimeout for the
  *  time remaining until its next due fire, which then settles into a steady
@@ -725,8 +748,19 @@ function syncMissions(): void {
         // Gate on `kind!=='compact'` ALONE — that already excludes the compact mission;
         // we deliberately do NOT add `&& m.body`, so other (dispatch) missions keep
         // their prior behaviour, including the historical empty-body send (Pam N1).
+        // MDF-17: quiet hours + guardrails decide the run before anything is
+        // sent. A skip or dry run is still stamped (lastFiredAt) and logged, so
+        // the slot counts as handled and History shows why nothing happened.
+        const verdict = evaluateGuards(m.guards, Date.now(), automationRunsToday('schedule', m.id));
+        recordScheduleRun(m, verdict.action === 'skip' ? `skipped:${verdict.reason}` : verdict.action === 'dry-run' ? 'dry-run' : 'auto-allowed');
+        if (verdict.action !== 'run') {
+          const current = readConfig().missions ?? [];
+          writeConfig({ missions: current.map((x) => (x.id === m.id ? { ...x, lastFiredAt: Date.now() } : x)) });
+          try { liveWebContents()?.send('missions:updated'); } catch { /* window gone */ }
+          return;
+        }
         if (m.kind !== 'compact' && hive.enabled()) {
-          hive.send({ to: m.to, act: 'request', subject: m.label, body: m.body }, 'scheduler');
+          hive.send({ to: m.to, act: 'request', subject: m.label, body: m.body + budgetLine(m.guards) }, 'scheduler');
         }
         // Auto-compact: do NOT jam /compact into busy terminals. Hand it to the
         // renderer, which queues a /compact per agent (deduped — never two at
@@ -2111,7 +2145,9 @@ async function startWebhookServer(): Promise<{ ok: boolean; url?: string; error?
     port: cfg.webhookPort && cfg.webhookPort > 0 ? cfg.webhookPort : WEBHOOK_DEFAULT_PORT,
     endpoints,
     onMessage: handleWebhookMessage,
-    lookupStatus: lookupWebhookStatus
+    lookupStatus: lookupWebhookStatus,
+    guard: guardWebhook,
+    onInvalid: (endpoint, error) => recordWebhookOutcome(endpoint, 'invalid', error)
   });
   webhookServer = server;
   const res = await server.start();
@@ -2123,6 +2159,29 @@ async function startWebhookServer(): Promise<{ ok: boolean; url?: string; error?
   if (res.url) lastWebhookUrl = res.url;
   startWebhookDoneObserver();
   return res;
+}
+
+/** MDF-17 guard for one inbound webhook, logged when it holds the run back. */
+function guardWebhook(endpoint: WebhookEndpointRef): WebhookGuardVerdict {
+  const trigger = (readConfig().webhookTriggers ?? []).find((t) => t.id === endpoint.id);
+  const verdict = evaluateGuards(trigger?.guards, Date.now(), automationRunsToday('webhook', endpoint.id));
+  if (verdict.action === 'skip') recordWebhookOutcome(endpoint, `skipped:${verdict.reason}`, 'held back by a guard');
+  if (verdict.action === 'dry-run') recordWebhookOutcome(endpoint, 'dry-run', 'dry run: accepted, not routed');
+  return verdict;
+}
+
+function recordWebhookOutcome(
+  endpoint: WebhookEndpointRef,
+  decision: NonNullable<TriggerHistoryEntry['decision']>,
+  body: string
+): void {
+  try {
+    appendTriggerHistory({
+      source: 'webhook', sourceId: endpoint.id, sourceName: endpoint.name, direction: 'inbound',
+      peer: endpoint.name || endpoint.id, title: decision, body, kind: 'communication', decision
+    });
+    notifyTriggerHistoryUpdated();
+  } catch { /* best-effort */ }
 }
 
 /** Bring the running server in line with config after any webhook mutation.
@@ -4049,7 +4108,7 @@ ipcMain.handle('missions:save', (_evt, missions) => {
   const merged = incoming.map((m) => {
     const prevLastFired = persistedById.get(m.id)?.lastFiredAt ?? 0;
     const lastFiredAt = Math.max(m.lastFiredAt ?? 0, prevLastFired) || undefined;
-    return { ...m, lastFiredAt };
+    return { ...m, lastFiredAt, guards: normalizeGuards(m.guards) };
   });
   writeConfig({ missions: merged });
   syncMissions();
@@ -4256,6 +4315,32 @@ ipcMain.handle('webhooks:delete', (_evt, arg: unknown) => {
 });
 /** Mint a strong (256-bit) secret for the operator to paste into their caller.
  *  Not persisted here — it belongs to whichever endpoint the UI saves it onto. */
+/** MDF-17 "Test" button: POST a sample payload to the LOCAL listener exactly as
+ *  an outside caller would (secret header included), so the reply code and the
+ *  History row are the real ones. The secret never leaves main. */
+ipcMain.handle('webhooks:test', async (_evt, arg: unknown) => {
+  const a = (arg ?? {}) as { id?: unknown; payload?: unknown };
+  const id = typeof a.id === 'string' ? a.id : '';
+  const trigger = (readConfig().webhookTriggers ?? []).find((t) => t.id === id);
+  if (!trigger) return { status: 0, error: 'unknown webhook' };
+  if (!webhookServer || !trigger.enabled) return { status: 0, error: 'turn the webhook on to test it' };
+  const cfg = readConfig();
+  const port = cfg.webhookPort && cfg.webhookPort > 0 ? cfg.webhookPort : WEBHOOK_DEFAULT_PORT;
+  const payload = typeof a.payload === 'string' ? a.payload : '{}';
+  try {
+    const r = await fetch(`http://127.0.0.1:${port}/${encodeURIComponent(id)}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-md-webhook-secret': trigger.secret },
+      body: payload
+    });
+    const text = await r.text();
+    let body: unknown = text;
+    try { body = JSON.parse(text); } catch { /* keep text */ }
+    return { status: r.status, body };
+  } catch (e) {
+    return { status: 0, error: e instanceof Error ? e.message : String(e) };
+  }
+});
 ipcMain.handle('webhooks:generateSecret', () => randomBytes(32).toString('hex'));
 /** Server state + the tunnel root + one public URL per configured endpoint (the
  *  UI offers a copy button per webhook, so the root alone isn't enough). */
@@ -4287,7 +4372,9 @@ function sanitizeWebhookTrigger(raw: unknown, existing: WebhookTrigger[]): Webho
     enabled: secret ? (typeof r.enabled === 'boolean' ? r.enabled : prior?.enabled ?? false) : false,
     mode,
     schema: typeof r.schema === 'string' && r.schema.trim() ? r.schema : prior?.schema ?? DEFAULT_WEBHOOK_SCHEMA,
-    createdAt: typeof r.createdAt === 'number' && r.createdAt > 0 ? r.createdAt : prior?.createdAt ?? Date.now()
+    createdAt: typeof r.createdAt === 'number' && r.createdAt > 0 ? r.createdAt : prior?.createdAt ?? Date.now(),
+    // Absent = keep what is saved; present (even null) = the renderer's choice.
+    guards: 'guards' in r ? normalizeGuards(r.guards) : prior?.guards
   };
 }
 
@@ -4350,7 +4437,7 @@ ipcMain.handle('triggerHistory:decide', (_evt, arg: unknown) => {
   const taskId = `webhook-${randomBytes(8).toString('hex')}`;
   const tokenHash = heldTokenHashFor(id);
   const title = entry.title ?? (entry.body.length > 80 ? `${entry.body.slice(0, 79)}…` : entry.body);
-  if (!dispatchWebhookWork({ taskId, title, message: entry.body, tokenHash, origin: entry.source })) {
+  if (!dispatchWebhookWork({ taskId, title, message: entry.body, tokenHash, origin: entry.source === 'org' ? 'org' : 'webhook' })) {
     // The card is what the caller polls and what god works from. Leave the entry
     // pending so the operator can approve again once the hive is writable.
     return entry;
