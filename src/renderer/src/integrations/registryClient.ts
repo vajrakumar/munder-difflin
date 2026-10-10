@@ -43,6 +43,8 @@ export interface TestResult {
   ok: boolean;
   status?: number;
   error?: string;
+  /** Round-trip time of the probe, milliseconds. */
+  ms?: number;
 }
 
 type UpsertResult = { ok: true; record: IntegrationRecord } | { ok: false; error: string };
@@ -112,7 +114,7 @@ const mockClient: IntegrationsClient = {
     if (authTypeNeedsSecret(r.authType) && !(r.secretRef && mockSecret.has(r.secretRef))) {
       return Promise.resolve({ ok: false, status: 503, error: 'no secret set' });
     }
-    return Promise.resolve({ ok: true, status: 200 });
+    return Promise.resolve({ ok: true, status: 200, ms: 42 });
   }
 };
 

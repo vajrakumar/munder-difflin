@@ -386,6 +386,11 @@ interface WorkerRec {
   /** Per-worker TOTAL-token cap from the spawn-request (overrides the config
    *  default). 0/undefined = no per-request cap. P4 plumbing — unlimited today. */
   tokenCap?: number;
+  /** The job text from the spawn-request; shown on the Temps live strip. */
+  objective: string;
+  /** Set just before teardown so history records how this run ended. */
+  result?: 'done' | 'failed' | 'stopped';
+  failureReason?: string;
 }
 /** Live ephemeral workers by id. Populated by the spawn-request watcher; consulted
  *  by teardownPty so a finished/crashed/reaped worker's worktree is PRESERVED (not
@@ -449,13 +454,76 @@ const preservedWorktrees = new Map<string, PreservedWorktree>();
  * step is wrapped so a teardown error can never crash the caller (an IPC
  * handler or node-pty's onExit).
  */
+function slackArchiveUrl(slack?: { channel: string; thread_ts: string }): string {
+  if (!slack?.channel || !slack.thread_ts) return '';
+  return `https://slack.com/archives/${slack.channel}/p${slack.thread_ts.replace('.', '')}`;
+}
+
+/** Body of this worker's terminal `act:"done"` message, if it posted one after spawn. */
+function workerDoneReport(workerId: string, spawnedAt: number): string {
+  const root = hive.root();
+  if (!root) return '';
+  const base = join(root, 'agents', workerId, 'outbox');
+  let best: { ts: number; body: string } | null = null;
+  for (const dir of [base, join(base, '.sent')]) {
+    if (!existsSync(dir)) continue;
+    let files: string[];
+    try { files = readdirSync(dir); } catch { continue; }
+    for (const f of files) {
+      if (!f.endsWith('.json')) continue;
+      const fp = join(dir, f);
+      try {
+        const msg = JSON.parse(readFileSync(fp, 'utf8')) as { act?: string; created_at?: string; body?: string };
+        if (msg.act !== 'done') continue;
+        let ts = Date.parse(msg.created_at ?? '');
+        if (!Number.isFinite(ts)) {
+          try { ts = statSync(fp).mtimeMs; } catch { ts = NaN; }
+        }
+        if (!Number.isFinite(ts) || ts <= spawnedAt) continue;
+        const body = typeof msg.body === 'string' ? msg.body.trim() : '';
+        if (!best || ts > best.ts) best = { ts, body };
+      } catch { /* skip unreadable/partial */ }
+    }
+  }
+  return best?.body ?? '';
+}
+
+function recordTempHistory(rec: WorkerRec, tokens: number, usd: number): void {
+  try {
+    persist.upsertTempHistory({
+      id: rec.workerId,
+      name: rec.name ?? rec.workerId,
+      objective: rec.objective ?? '',
+      startedAt: rec.spawnedAt,
+      endedAt: Date.now(),
+      tokens,
+      usd,
+      result: rec.result === 'stopped' || rec.result === 'failed' ? rec.result : 'done',
+      report: rec.result === 'done' ? workerDoneReport(rec.workerId, rec.spawnedAt) : '',
+      failureReason: rec.failureReason ?? '',
+      slackUrl: slackArchiveUrl(rec.slack)
+    });
+  } catch (e) {
+    console.error('[worker] temp history persist failed:', e);
+  }
+}
+
 function teardownPty(id: string): void {
   // Ephemeral-worker flag, read BEFORE the cleanup below deletes the entry. All
   // worker deaths (done-release, idle/token reap, manual stop, crash) funnel
   // through here, so this is the one place their floor card gets archived
   // (workers card via the hive:agentSpawned broadcast in processSpawnRequest).
   // pty id == worker id == agent id for workers.
-  const wasWorker = liveWorkers.has(id);
+  const workerRec = liveWorkers.get(id);
+  const wasWorker = !!workerRec;
+  // Snapshot usage BEFORE telemetry.forgetAgent drops the live counter.
+  const histTokens = workerRec ? workerTokensUsed(id) : 0;
+  const histUsd = workerRec ? (usageProvider.getAgentUsage(id)?.usd ?? 0) : 0;
+  if (workerRec && !workerRec.result) {
+    workerRec.result = 'failed';
+    workerRec.failureReason = workerRec.failureReason || 'process exited';
+  }
+  if (workerRec) recordTempHistory(workerRec, histTokens, histUsd);
   // 0) Revoke this id's broker capability (if any). Idempotent + harmless for a
   //    non-worker PTY; ensures a dead worker's token can never reach an integration.
   try { integrationBroker.revoke(id); } catch { /* best-effort */ }
@@ -3261,14 +3329,15 @@ ipcMain.handle('integrations:test', async (_evt, payload: unknown) => {
   if (!target) return { ok: false, error: 'path escapes the integration baseUrl', code: 'bad_request' };
   const secret = integrations.getSecret(rec.secretRef);
   const headers = buildAuthHeaders(rec.authType, rec.authHeader, secret);
+  const started = Date.now();
   try {
     const ac = new AbortController();
     const timer = setTimeout(() => ac.abort(), 15_000);
     const r = await fetch(target, { method: 'GET', headers, redirect: 'manual', signal: ac.signal });
     clearTimeout(timer);
-    return { ok: r.ok, status: r.status };
+    return { ok: r.ok, status: r.status, ms: Date.now() - started };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+    return { ok: false, error: e instanceof Error ? e.message : String(e), ms: Date.now() - started };
   }
 });
 
@@ -4927,7 +4996,7 @@ async function processSpawnRequest(filePath: string): Promise<void> {
   // tokenCap is optional plumbing (default unlimited) — only a positive finite cap is kept.
   const tokenCap = typeof raw.tokenCap === 'number' && Number.isFinite(raw.tokenCap) && raw.tokenCap > 0
     ? raw.tokenCap : undefined;
-  liveWorkers.set(workerId, { workerId, reqId, name: meta.name, slack, baseBranch, spawnedAt: Date.now(), tokenCap });
+  liveWorkers.set(workerId, { workerId, reqId, name: meta.name, slack, baseBranch, spawnedAt: Date.now(), tokenCap, objective });
 
   // Dispatch the objective via the standard inbox path (zero new transport),
   // reusing the autonomous-request preamble so the worker gets the exact Slack
@@ -5034,6 +5103,7 @@ async function ephemeralWorkerTick(): Promise<void> {
       if (doneAt !== null) {
         // Success: the worker already replied in-thread; just release it.
         rec.releasing = true;
+        rec.result = 'done';
         console.log(`[worker] ${workerId} signaled done — releasing`);
         // Its mailbox is finished with too. Workers seldom file their own work
         // order before signaling done, and the id is reused on every re-hire of
@@ -5077,6 +5147,8 @@ async function ephemeralWorkerTick(): Promise<void> {
         const used = workerTokensUsed(workerId);
         if (used > tokenCap) {
           rec.releasing = true;
+          rec.result = 'failed';
+          rec.failureReason = `token cap (${used.toLocaleString()} > ${tokenCap.toLocaleString()})`;
           console.warn(`[worker] reaping ${workerId} — token cap (${used.toLocaleString()} > ${tokenCap.toLocaleString()})`);
           informGod(
             `[worker reaped — token cap] ${workerId}`,
@@ -5092,6 +5164,8 @@ async function ephemeralWorkerTick(): Promise<void> {
       if (idleMs === undefined) continue; // PTY already gone; teardownPty cleans up
       if (idleMs > idleTimeoutMs) {
         rec.releasing = true;
+        rec.result = 'failed';
+        rec.failureReason = `idle ${Math.round(idleMs / 60000)} min`;
         console.warn(`[worker] reaping idle ${workerId} (${Math.round(idleMs / 60000)}min idle)`);
         informGod(
           `[worker reaped — idle] ${workerId}`,
@@ -5162,9 +5236,20 @@ interface WorkerSnapshot {
   idleMs: number | null;        // null = PTY already gone
   tokensUsed: number;
   tokenCap: number | null;      // effective cap (per-request or config default); null = unlimited
+  usd: number;
+  objective: string;
+  slackUrl: string;
   hasSlack: boolean;
   releasing: boolean;
   status: 'releasing' | 'working';
+}
+
+interface PendingSpawnSnapshot {
+  id: string;
+  file: string;
+  objective: string;
+  name: string;
+  waitingMs: number;
 }
 /** Snapshot of a preserved-but-not-yet-GC'd worktree for the tab. */
 interface PreservedSnapshot {
@@ -5193,6 +5278,9 @@ ipcMain.handle('workers:list', (): { live: WorkerSnapshot[]; preserved: Preserve
       idleMs: idle === undefined ? null : idle,
       tokensUsed: workerTokensUsed(rec.workerId),
       tokenCap: effCap > 0 ? effCap : null,
+      usd: usageProvider.getAgentUsage(rec.workerId)?.usd ?? 0,
+      objective: rec.objective ?? '',
+      slackUrl: slackArchiveUrl(rec.slack),
       hasSlack: !!rec.slack,
       releasing: !!rec.releasing,
       status: rec.releasing ? 'releasing' : 'working'
@@ -5203,6 +5291,33 @@ ipcMain.handle('workers:list', (): { live: WorkerSnapshot[]; preserved: Preserve
   }));
   return { live, preserved, maxWorkers: Math.max(1, cfg.maxConcurrentWorkers ?? 4) };
 });
+
+function listPendingSpawnRequests(): PendingSpawnSnapshot[] {
+  const dir = spawnRequestsDir();
+  if (!dir || !existsSync(dir)) return [];
+  const now = Date.now();
+  const out: PendingSpawnSnapshot[] = [];
+  let files: string[];
+  try { files = readdirSync(dir); } catch { return []; }
+  for (const f of files) {
+    if (!f.endsWith('.json')) continue;
+    const fp = join(dir, f);
+    try {
+      const st = statSync(fp);
+      if (!st.isFile()) continue;
+      const raw = JSON.parse(readFileSync(fp, 'utf8')) as { id?: unknown; objective?: unknown; name?: unknown };
+      const id = (typeof raw.id === 'string' && raw.id.trim() ? raw.id.trim() : f.replace(/\.json$/i, ''));
+      out.push({
+        id,
+        file: f,
+        objective: typeof raw.objective === 'string' ? raw.objective : '',
+        name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : id,
+        waitingMs: Math.max(0, now - st.mtimeMs)
+      });
+    } catch { /* skip unreadable */ }
+  }
+  return out;
+}
 
 /** Manually stop a live ephemeral worker. Mirrors the done-release path: mark
  *  releasing, then kill + teardownPty runs the SAFETY-GATED worktree teardown
@@ -5218,10 +5333,55 @@ ipcMain.handle('workers:stop', (_evt, workerId: string): { ok: boolean; error?: 
   if (!rec) return { ok: false, error: 'no such live worker' };
   if (rec.releasing) return { ok: true }; // already stopping
   rec.releasing = true;
+  rec.result = 'stopped';
   console.log(`[worker] manual stop requested for ${workerId}`);
   try { ptyManager.kill(workerId); } catch (e) { return { ok: false, error: String(e) }; }
   teardownPty(workerId);
   return { ok: true };
+});
+
+ipcMain.handle('workers:pending', (): { pending: PendingSpawnSnapshot[]; spawnEnabled: boolean } => ({
+  pending: listPendingSpawnRequests(),
+  spawnEnabled: readConfig().orchestratorMaySpawn === true
+}));
+
+ipcMain.handle('temps:history', (_evt, limit: unknown) =>
+  persist.listTempHistory(typeof limit === 'number' ? limit : 200));
+
+ipcMain.handle('temps:snapshot', () => {
+  const listed = (() => {
+    const cfg = readConfig();
+    const defaultCap = typeof cfg.defaultWorkerTokenCap === 'number' && cfg.defaultWorkerTokenCap > 0
+      ? cfg.defaultWorkerTokenCap : 0;
+    const now = Date.now();
+    const live: WorkerSnapshot[] = [...liveWorkers.values()].map((rec) => {
+      const idle = ptyManager.idleFor(rec.workerId);
+      const effCap = (rec.tokenCap && rec.tokenCap > 0) ? rec.tokenCap : (defaultCap > 0 ? defaultCap : 0);
+      return {
+        workerId: rec.workerId,
+        reqId: rec.reqId,
+        name: rec.name ?? rec.workerId,
+        baseBranch: rec.baseBranch,
+        spawnedAt: rec.spawnedAt,
+        ageMs: Math.max(0, now - rec.spawnedAt),
+        idleMs: idle === undefined ? null : idle,
+        tokensUsed: workerTokensUsed(rec.workerId),
+        tokenCap: effCap > 0 ? effCap : null,
+        usd: usageProvider.getAgentUsage(rec.workerId)?.usd ?? 0,
+        objective: rec.objective ?? '',
+        slackUrl: slackArchiveUrl(rec.slack),
+        hasSlack: !!rec.slack,
+        releasing: !!rec.releasing,
+        status: rec.releasing ? 'releasing' : 'working' as const
+      };
+    });
+    return { live, maxWorkers: Math.max(1, cfg.maxConcurrentWorkers ?? 4), spawnEnabled: cfg.orchestratorMaySpawn === true };
+  })();
+  return {
+    ...listed,
+    pending: listPendingSpawnRequests(),
+    history: persist.listTempHistory(200)
+  };
 });
 
 /** Start every hive-bound background service against the current harnessHome.

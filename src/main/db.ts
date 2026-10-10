@@ -28,6 +28,23 @@ export interface CommandHistoryRow {
   ts: number;
 }
 
+/** How a temp ended. `workers:list` only shows live temps; this is the rest. */
+export type TempResult = 'done' | 'failed' | 'stopped';
+
+export interface TempHistoryRow {
+  id: string;
+  name: string;
+  objective: string;
+  startedAt: number;
+  endedAt: number;
+  tokens: number;
+  usd: number;
+  result: TempResult;
+  report: string;
+  failureReason: string;
+  slackUrl: string;
+}
+
 /**
  * Ordered, append-only migrations. Index N takes the DB from user_version N to
  * N+1. To evolve the schema, APPEND a new function — never edit an existing one
@@ -63,6 +80,25 @@ const MIGRATIONS: Array<(db: Database.Database) => void> = [
         ts       INTEGER NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_ch_agent_ts ON command_history(agent_id, ts DESC);
+    `);
+  },
+  // → user_version 2 (MDF-20): persisted temp history. workers:list is live-only.
+  (db) => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS temp_history (
+        id              TEXT PRIMARY KEY,
+        name            TEXT NOT NULL DEFAULT '',
+        objective       TEXT NOT NULL,
+        started_at      INTEGER NOT NULL,
+        ended_at        INTEGER NOT NULL,
+        tokens          INTEGER NOT NULL DEFAULT 0,
+        usd             REAL NOT NULL DEFAULT 0,
+        result          TEXT NOT NULL,
+        report          TEXT NOT NULL DEFAULT '',
+        failure_reason  TEXT NOT NULL DEFAULT '',
+        slack_url       TEXT NOT NULL DEFAULT ''
+      );
+      CREATE INDEX IF NOT EXISTS idx_temp_history_ended ON temp_history(ended_at DESC);
     `);
   }
 ];
@@ -164,6 +200,58 @@ export class PersistStore {
     return this.db.prepare(
       "SELECT id, agent_id AS agentId, cwd, text, ts FROM command_history WHERE text LIKE ? ESCAPE '\\' ORDER BY ts DESC, id DESC LIMIT ?"
     ).all(needle, lim) as CommandHistoryRow[];
+  }
+
+  // ─── temp history (MDF-20) ─────────────────────────────────────────────────
+
+  /** Upsert one finished temp. Re-hiring the same id overwrites the last run. */
+  upsertTempHistory(row: TempHistoryRow): void {
+    if (!this.db) return;
+    if (!row.id) return;
+    const result: TempResult = row.result === 'failed' || row.result === 'stopped' ? row.result : 'done';
+    this.db.prepare(`
+      INSERT INTO temp_history (
+        id, name, objective, started_at, ended_at, tokens, usd, result, report, failure_reason, slack_url
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        name = excluded.name,
+        objective = excluded.objective,
+        started_at = excluded.started_at,
+        ended_at = excluded.ended_at,
+        tokens = excluded.tokens,
+        usd = excluded.usd,
+        result = excluded.result,
+        report = excluded.report,
+        failure_reason = excluded.failure_reason,
+        slack_url = excluded.slack_url
+    `).run(
+      row.id,
+      row.name ?? '',
+      row.objective ?? '',
+      row.startedAt,
+      row.endedAt,
+      Math.max(0, Math.floor(row.tokens || 0)),
+      Number.isFinite(row.usd) ? row.usd : 0,
+      result,
+      row.report ?? '',
+      row.failureReason ?? '',
+      row.slackUrl ?? ''
+    );
+  }
+
+  /** Most-recent-first finished temps. */
+  listTempHistory(limit = 200): TempHistoryRow[] {
+    if (!this.db) return [];
+    const lim = clampLimit(limit, 200);
+    return this.db.prepare(`
+      SELECT id, name, objective,
+             started_at AS startedAt, ended_at AS endedAt,
+             tokens, usd, result, report,
+             failure_reason AS failureReason, slack_url AS slackUrl
+      FROM temp_history
+      ORDER BY ended_at DESC
+      LIMIT ?
+    `).all(lim) as TempHistoryRow[];
   }
 }
 

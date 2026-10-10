@@ -1195,6 +1195,22 @@
     "preservedIntro": "已完成工人的工作树中保留着未整合的工作——保留（绝不自动丢弃），并在工作合入其基础分支后自动回收。",
     "keptAgo": "{{age}} 前保留"
   },
+  "paperTemps": {
+    "title": "临时工",
+    "empty": "还没有临时工。编排者在需要时会雇一个。",
+    "stop": "停止",
+    "openRoom": "打开终端",
+    "pendingOff": "临时工开关是关的，这些请求会留在 spawn-requests，直到你在 设置 › 自主与预算 里打开。"
+  },
+  "paperConnections": {
+    "title": "连接",
+    "add": "添加",
+    "test": "测试",
+    "secretPlaceholder": "粘贴密钥 — 保存后不会再显示",
+    "ok": "正常",
+    "failing": "失败",
+    "untested": "未测试"
+  },
   "memoryGraph": {
     "topics": "主题",
     "refresh": "刷新",

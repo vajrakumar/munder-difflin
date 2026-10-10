@@ -1195,6 +1195,22 @@
     "preservedIntro": "Finished workers whose worktree held un-integrated work — kept (never auto-discarded) and auto-reclaimed once the work lands in its base branch.",
     "keptAgo": "kept {{age}} ago"
   },
+  "paperTemps": {
+    "title": "Temps",
+    "empty": "No temps yet. The orchestrator hires one when a job needs it.",
+    "stop": "Stop",
+    "openRoom": "Open terminal",
+    "pendingOff": "The temps switch is off, so these sit in spawn-requests until you turn it on in Settings › Autonomy & Budgets."
+  },
+  "paperConnections": {
+    "title": "Connections",
+    "add": "Add",
+    "test": "Test",
+    "secretPlaceholder": "Paste a key — it is never shown again",
+    "ok": "OK",
+    "failing": "Failing",
+    "untested": "Untested"
+  },
   "memoryGraph": {
     "topics": "topics",
     "refresh": "refresh",

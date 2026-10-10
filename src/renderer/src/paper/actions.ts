@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Brain, CircleDot, Home, Inbox, ListTodo, Puzzle, Search, StickyNote,
+  Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, StickyNote,
   Timer, UserPlus, Users, Waypoints
 } from 'lucide-react';
 import { filterActions as rankActions, highlightMatch } from './actionSearch';
@@ -31,7 +31,8 @@ const NAV_META: Array<[PaperRoute, string, string, string, LucideIcon]> = [
   ['automations', 'Go to Automations', 'schedule webhook cron', 'G A', Timer],
   ['memory', 'Go to Memory', 'search palace graph', 'G M', Brain],
   ['capabilities', 'Go to Capabilities', 'skills mcp tools', 'G C', Puzzle],
-  ['temps', 'Go to Temps', 'workers ephemeral', 'G P', Users],
+  ['temps', 'Go to Temps', 'workers ephemeral spawn', 'G P', Users],
+  ['connections', 'Go to Connections', 'integrations api secrets rest', 'G K', KeyRound],
   ['stapler', 'Go to Stapler', 'dictate meeting capture', 'G S', CircleDot],
   ['notes', 'Go to Notes', 'private', 'G N', StickyNote],
   ['orchestrator', 'Open Orchestrator', 'michael god routing breaker budget board', 'G O', Waypoints]
@@ -97,6 +98,27 @@ export function defaultActions(opts?: {
       keywords: 'trigger mission',
       icon: Timer,
       run: () => go('automations')
+    },
+    {
+      id: 'temps.stop',
+      label: 'Stop selected temp',
+      group: 'Temps',
+      keywords: 'kill worker reap x',
+      run: () => go('temps')
+    },
+    {
+      id: 'connections.add',
+      label: 'Add connection',
+      group: 'Connections',
+      keywords: 'integration rest api secret n',
+      run: () => go('connections')
+    },
+    {
+      id: 'connections.test',
+      label: 'Test selected connection',
+      group: 'Connections',
+      keywords: 'probe ping t',
+      run: () => go('connections')
     }
   ];
 }

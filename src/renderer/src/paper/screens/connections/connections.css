@@ -1,0 +1,104 @@
+/* Connections (MDF-20). Paper tokens only; logical properties for RTL. */
+
+.pn-root {
+  padding: 16px 20px 12px;
+  overflow: hidden;
+  gap: 12px;
+  background: var(--paper-bg);
+  min-height: 0;
+}
+
+.pn-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.pn-toolbar h1 {
+  margin: 0;
+  font-size: var(--paper-text-xl);
+  letter-spacing: -0.02em;
+  line-height: var(--paper-leading-xl);
+}
+.pn-lede {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--paper-text-muted);
+  font-size: var(--paper-text-sm);
+}
+
+.pn-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.pn-table { min-width: 640px; }
+.pn-table tbody tr { cursor: pointer; }
+.pn-table tbody tr[aria-current="true"] {
+  background: var(--paper-accent-2, var(--paper-neutral-3));
+}
+.pn-url {
+  font-family: var(--paper-font-mono);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+.pn-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.pn-test {
+  font-size: 11px;
+  color: var(--paper-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pn-skel { display: flex; flex-direction: column; gap: 8px; }
+.pn-skel-row { height: 40px; border-radius: var(--paper-radius-md); }
+
+.pn-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pn-help {
+  margin: 0;
+  font-size: 11px;
+  color: var(--paper-text-muted);
+}
+.pn-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--paper-text-sm);
+}
+.pn-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-block-start: 8px;
+}
+
+.pn-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  padding-block-start: 8px;
+  border-top: 1px solid var(--paper-border);
+  font-size: 11px;
+  color: var(--paper-text-muted);
+}
+.pn-foot-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-inline-start: auto; }
