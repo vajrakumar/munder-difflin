@@ -2,6 +2,21 @@
 
 Reviewer: Dwight · 2026-10-10 · Build: `fork/main` at `3adf932d`. I served `paper.html` and `gallery.html` from a clean export of that commit, because the shared `:5179` server was serving a working tree in the middle of an edit. I captured them in headless Chrome at 1440×900 and 1024×640, in light and dark. The check is against `DESIGN.md` (Paper v1).
 
+**Fix round (MDF-46, Toby / `feat/design-qa-1`):** start `232c9aaa`. P1 then P2. Skip P3. Do not edit screens/tasks, automations, or memory.
+
+| # | Pri | Status |
+| --- | --- | --- |
+| 1 | P1 | in progress |
+| 2 | P1 | open |
+| 3 | P1 | open |
+| 4 | P1 | open |
+| 5 | P1 | open |
+| 6 | P1 | open |
+| 7 | P1 | open |
+| 8 | P1 | open |
+| 9–18 | P2 | open |
+| 19–25 | P3 | skipped |
+
 **How it's ranked:** P1 means it breaks a DESIGN.md rule or a core flow. P2 is a visible polish issue. P3 is a refinement. Paths are relative to `src/renderer/src/`.
 
 ## P1: rule breaks and broken flows
