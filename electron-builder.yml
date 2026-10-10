@@ -5,7 +5,7 @@
 #
 # productName drives FILE names (the .app bundle, its executable, artifacts),
 # so it is the apostrophe-free "Vajras Office". The name people see, "Vajra's
-# Office", is CFBundleDisplayName/CFBundleName below and extraMetadata.productName
+# Office", is CFBundleDisplayName below and extraMetadata.productName
 # (Electron's app.name: menus, About box). Do not set executableName: on macOS
 # it also renames the .app bundle.
 appId: com.vajras-office.app
@@ -108,8 +108,10 @@ mac:
   # the privacy prompt and, for a signed app, remembers the grant — so the user
   # is asked ONCE instead of on every agent action.
   extendInfo:
+    # Only the DISPLAY name. CFBundleName must stay = productName: Electron finds
+    # its "<CFBundleName> Helper.app" bundles by it, and a mismatch aborts launch
+    # with "Unable to find helper app".
     CFBundleDisplayName: "Vajra's Office"
-    CFBundleName: "Vajra's Office"
     NSDocumentsFolderUsageDescription: "Vajra's Office runs your Claude Code agents, which read and write files in the project folders you point them at."
     NSDesktopFolderUsageDescription: "Vajra's Office's agents may work on projects located on your Desktop."
     NSDownloadsFolderUsageDescription: "Vajra's Office's agents may work on projects located in your Downloads."

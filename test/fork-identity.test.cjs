@@ -21,7 +21,6 @@ test("display name is Vajra's Office everywhere a person sees it", () => {
   assert.equal(id.APP_DISPLAY_NAME, "Vajra's Office");
   assert.equal(cfg.extraMetadata.productName, id.APP_DISPLAY_NAME);
   assert.equal(cfg.mac.extendInfo.CFBundleDisplayName, id.APP_DISPLAY_NAME);
-  assert.equal(cfg.mac.extendInfo.CFBundleName, id.APP_DISPLAY_NAME);
   assert.equal(cfg.protocols[0].name, id.APP_DISPLAY_NAME);
   assert.equal(cfg.nsis.shortcutName, id.APP_DISPLAY_NAME);
   assert.ok(cfg.dmg.title.startsWith(id.APP_DISPLAY_NAME));
@@ -42,6 +41,13 @@ test('every machine identifier is apostrophe-free and uses the slug', () => {
   assert.equal(cfg.extraMetadata.name, id.APP_SLUG);
   assert.equal(id.USER_DATA_DIR_NAME, id.APP_SLUG);
   assert.deepEqual(cfg.protocols[0].schemes, [id.DEEP_LINK_SCHEME]);
+});
+
+test('CFBundleName is left to productName so Electron can find its helper apps', () => {
+  // Electron resolves Frameworks/<CFBundleName> Helper.app; electron-builder
+  // names the helpers after productName. Overriding CFBundleName aborted launch
+  // with "Unable to find helper app".
+  assert.equal(cfg.mac.extendInfo.CFBundleName, undefined);
 });
 
 test('nothing collides with the installed Munder Difflin', () => {
