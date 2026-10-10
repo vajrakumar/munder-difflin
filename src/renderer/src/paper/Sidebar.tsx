@@ -221,6 +221,7 @@ export function Sidebar({
           <a
             className="paper-nav"
             href={hrefFor('home')}
+            aria-label="Home"
             aria-current={loc.route === 'home' ? 'page' : undefined}
           >
             <Home size={16} />
@@ -233,6 +234,7 @@ export function Sidebar({
                 key={item.id}
                 className="paper-nav"
                 href={hrefFor(item.id)}
+                aria-label={item.label}
                 aria-current={loc.route === item.id ? 'page' : undefined}
               >
                 <Icon size={16} />
@@ -306,6 +308,7 @@ export function Sidebar({
           <a
             className="paper-nav"
             href={hrefFor('notes')}
+            aria-label="Notes"
             aria-current={loc.route === 'notes' && !activeNoteId ? 'page' : undefined}
           >
             <StickyNote size={16} />

@@ -5,16 +5,18 @@ export function Select({
   value,
   onValueChange,
   options,
-  placeholder = 'Select'
+  placeholder = 'Select',
+  'aria-label': ariaLabel
 }: {
   value?: string;
   onValueChange?: (value: string) => void;
   options: Array<{ value: string; label: string }>;
   placeholder?: string;
+  'aria-label'?: string;
 }): JSX.Element {
   return (
     <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
-      <SelectPrimitive.Trigger className="paper-select-trigger">
+      <SelectPrimitive.Trigger className="paper-select-trigger" aria-label={ariaLabel}>
         <SelectPrimitive.Value placeholder={placeholder} />
         <ChevronDown size={14} />
       </SelectPrimitive.Trigger>

@@ -113,6 +113,7 @@ export function PaperApp(): JSX.Element {
   return (
     <TooltipProvider>
       <div className="paper-shell">
+        <a className="paper-skip" href="#paper-main">Skip to content</a>
         <header className="paper-titlebar">
           <span className="paper-titlebar-brand">{APP_DISPLAY_NAME}</span>
           <button type="button" className="paper-titlebar-search" onClick={() => setPalette(true)}>
@@ -126,6 +127,7 @@ export function PaperApp(): JSX.Element {
           <Button
             size="sm"
             variant="ghost"
+            aria-label={`Switch theme (now ${theme})`}
             onClick={() => setTheme((t) => (t === 'light' ? 'dark' : t === 'dark' ? 'hc' : 'light'))}
           >
             {theme}

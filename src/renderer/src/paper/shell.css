@@ -1,3 +1,19 @@
+.paper-skip {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: -40px;
+  z-index: 90;
+  padding: 6px 10px;
+  background: var(--paper-accent-9);
+  color: var(--paper-neutral-1);
+  border-radius: var(--paper-radius-md);
+  font-size: var(--paper-text-sm);
+  text-decoration: none;
+}
+.paper-skip:focus {
+  top: 8px;
+}
+
 .paper-shell {
   display: flex;
   flex-direction: column;

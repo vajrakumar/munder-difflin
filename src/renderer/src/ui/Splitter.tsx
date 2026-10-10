@@ -31,6 +31,7 @@ export function Splitter({
         role="separator"
         aria-orientation="vertical"
         aria-valuenow={Math.round(pct)}
+        aria-label="Resize panes"
         tabIndex={0}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
