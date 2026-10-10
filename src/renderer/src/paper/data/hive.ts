@@ -162,7 +162,7 @@ export async function patchTask(id: string, patch: TaskPatch): Promise<boolean> 
   }
 }
 
-async function send(msg: Pick<PaperMail, 'to' | 'act' | 'subject' | 'body'> & { conversation?: string; inReplyTo?: string }): Promise<boolean> {
+export async function sendMail(msg: Pick<PaperMail, 'to' | 'act' | 'subject' | 'body'> & { conversation?: string; inReplyTo?: string }): Promise<boolean> {
   const cth = bridge();
   if (!cth) {
     const local: PaperMail = {
@@ -201,7 +201,7 @@ async function send(msg: Pick<PaperMail, 'to' | 'act' | 'subject' | 'body'> & { 
 export function replyTo(last: PaperMail, body: string): Promise<boolean> {
   const to = last.from === HUMAN ? last.to : last.from;
   const subject = /^re:/i.test(last.subject) ? last.subject : `Re: ${last.subject}`;
-  return send({ to, act: 'inform', subject, body, conversation: last.conversation, inReplyTo: last.id });
+  return sendMail({ to, act: 'inform', subject, body, conversation: last.conversation, inReplyTo: last.id });
 }
 
 /** Answer the open question on an ASK ME card, then tell the god (same contract
@@ -213,7 +213,7 @@ export async function answerQuestion(task: PaperTask, text: string): Promise<boo
   const humanQA = task.humanQA.map((e) => (e === open ? { ...e, a: answer, answeredAt: new Date().toISOString() } : e));
   const ok = await patchTask(task.id, { humanQA });
   if (!ok) return false;
-  await send({
+  await sendMail({
     to: 'god',
     act: 'inform',
     subject: `HUMAN ANSWER on task "${task.rawTitle}"`,

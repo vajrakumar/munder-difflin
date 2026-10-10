@@ -23,6 +23,7 @@
 
 /* Routed screens own the whole main area: no shell padding, no page scroll. */
 .paper-main:has(> .pc-screen) {
+  container: screen / inline-size;
   padding: 0;
   overflow: hidden;
   display: flex;

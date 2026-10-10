@@ -184,3 +184,16 @@ export function isHuman(id: string): boolean {
 export function ticketIn(text: string): string | undefined {
   return /\b([A-Z][A-Z0-9]{1,9}-\d+)\b/.exec(text)?.[1];
 }
+
+/** Human label for an outside sender: "slack:#ops" → "Slack · #ops". */
+export function outsideLabel(from: string): string {
+  const [kind, ...rest] = from.split(':');
+  const detail = rest.join(':');
+  const names: Record<string, string> = {
+    slack: 'Slack', webhook: 'Webhook', automation: 'Automation', trigger: 'Automation', mission: 'Automation',
+    telegram: 'Telegram', github: 'GitHub', linear: 'Linear', email: 'Email', http: 'Webhook'
+  };
+  const name = names[kind.toLowerCase()] ?? kind;
+  if (kind.toLowerCase() === 'webhook' && detail) return names[detail.toLowerCase()] ?? `Webhook · ${detail}`;
+  return detail ? `${name} · ${detail}` : name;
+}
