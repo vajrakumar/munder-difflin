@@ -141,6 +141,30 @@ runs agents:
   `electron-builder.yml`. Keep every identifier apostrophe-free and distinct from
   upstream. The identity test will tell you what you missed.
 
+## Dependency audit (2026-10-10, branch `fork/deps-audit`)
+
+`npm audit` went from **52 issues (5 critical, 33 high, 14 moderate) to 30
+(1 critical, 23 high, 6 moderate)**. The fix was `npm audit fix`, which makes
+no major-version changes. Only `package-lock.json` changed; `package.json` did
+not. Upgraded: `@modelcontextprotocol/sdk` 1.29.0→1.32.1, `hono` 4.13.3→4.13.13,
+`proxy-addr` 2.0.7→2.0.8, `ip-address` 10.7.0→10.7.3, `fast-uri` 3.1.7→3.1.8,
+`http-cache-semantics` 4.2.0→4.3.0, `source-map-js` 1.2.1→1.2.2, and three
+`brace-expansion` lines. Typecheck is clean, the tests are at the 24-fail
+baseline, and `npm run dist:fork:mac` builds.
+
+What is left, grouped by the one package that would fix each group:
+
+| Group (count) | Packages | In the shipped app? | Why it is still open |
+| --- | --- | --- | --- |
+| Electron 32 (6) | `electron`, `@electron/get`, `extract-zip`, `global-agent`, `roarr`, `sprintf-js` | **Yes**, the runtime (ASAR integrity bypass and others) | The fix is Electron 44, a major bump. Needs sign-off (god) and a native-module rebuild plus a full smoke test. |
+| electron-builder 25 (12, incl. the 1 critical `tar`) | `electron-builder`, `app-builder-lib`, `builder-util`, `builder-util-runtime`, `dmg-builder`, `electron-builder-squirrel-windows`, `electron-publish`, `@electron/rebuild`, `@electron/node-gyp`, `cacache`, `make-fetch-happen`, `tar` | Mostly no: build-time tools. `builder-util-runtime` ships inside `electron-updater`, but the fork's updater is off. | The fix is electron-builder 26 / `@electron/rebuild` 4, both majors. Low risk to users; do it with the Electron bump. |
+| Vite 5 (3) | `vite`, `electron-vite`, `esbuild` | No: dev server and bundler only | The fix is Vite 8 / electron-vite 5, both majors. The advisories hit the dev server, which only runs locally. |
+| tunnelmole (7) | `tunnelmole`, `toml`, `@types/jest`, `expect`, `jest-message-util`, `micromatch`, `braces` | **Yes**: Slack/webhook tunnel (`src/main/slack.ts`, `webhook.ts`) | No fixed version exists upstream. Options: replace tunnelmole, or pin `toml`/`micromatch` with `overrides` after testing the tunnel. |
+| localtunnel (2) | `localtunnel`, `axios` | **Yes**: the same tunnel feature | npm's only "fix" is a downgrade to localtunnel 1.8.3. Overriding `axios` to 1.x needs a tunnel test first. |
+
+Recheck with `npm audit` after any dependency change. `npm audit fix --force`
+would apply the majors above; do not run it without sign-off.
+
 ## Licences to carry into any build you share
 
 - **Source: MIT** (`LICENSE`), © 2026 Chaitanya Giri. Keep the copyright and
