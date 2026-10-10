@@ -623,3 +623,23 @@ None this run.
 - P1: 1 (stacked room / terminal strip)
 - P2: 5
 - Electron: not launched
+
+---
+
+## MDF-49 re-verify (B-16-1)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · browser only · god inform conv-72fd1b.
+
+`75c6c13d` / merge `0580c3f5` on fork/main (HEAD `725bde30`). Gallery `http://127.0.0.1:5183/paper.html#/tasks` from the **main clone**. Developer :5179 left running. Evidence `/tmp/mdf49-qa/`. Electron not launched.
+
+| Bug | Result |
+| --- | --- |
+| P1 B-16-1 Done column unscrolled | **Verified.** At 1280×900 `overflow-x` is **`auto`** (`scrollbar-gutter: stable`), board 621 / scrollWidth 998. After `scrollLeft=377` **Done** is fully in view with all **11** cards (MDF-1…MDF-35). At 1024×640 same: `canScroll` true, after `scrollLeft=633` Done in view, 11 cards. Lede now `2 doing · 2 blocked · 11 done`. Screenshots `01-board-1280.png`, `02-board-scrolled.png`, `03-board-1024.png`, `04-board-1024-scrolled.png`. |
+| P2 B-16-2 Timeline last tick | **Verified.** Last mark with x>92 is omitted; remaining ticks Oct 4–10, none clipped. `05-timeline.png`. |
+| P2 B-16-3 Span accessible name | **Verified.** `aria-label` is `MDF-2 Product plan: Pro parity and UI direction Done` (key + title + status) plus `title`. |
+| P2 B-16-4 Owner group headings | **Verified.** Timeline rows grouped **DWIGHT / DEVELOPER / TESTER / PHYLLIS / KELLY / UNASSIGNED**. |
+| P2 B-16-6 Card title tooltips | **Verified.** `.pt-card-title` has `title={task.title}`. |
+
+Left open (not in MDF-49): **B-16-5** board status change is pointer-only.
+
+No P1 reopened on the Tasks board.
