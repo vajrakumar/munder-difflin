@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { Avatar, Badge, Button, EmptyState, Input, StatusRing } from '@/ui';
 import { hrefFor } from '../../routes';
 import { DEFAULT_PROJECTS, type PaperAgent } from '../../demoData';
+import { floorStatusLine, isLiveAgent } from '../../statusLine';
 import { useProSidebar } from '../../sidebarState';
 import type { PaperRoute } from '../../routes';
 import '../../common/common.css';
@@ -13,9 +14,7 @@ export const route: PaperRoute = 'home';
 
 type Filter = 'all' | 'live' | 'asked';
 
-function isLive(a: PaperAgent): boolean {
-  return a.status === 'working' || a.status === 'thinking' || a.status === 'looping' || a.status === 'typing';
-}
+const isLive = isLiveAgent;
 
 function Tile({ agent, project }: { agent: PaperAgent; project?: string }): JSX.Element {
   return (
@@ -68,7 +67,7 @@ export function Screen(): JSX.Element {
         <div>
           <h1>Home</h1>
           <p className="lede">
-            {live} live · {asked} asked you · {agents.length} on the floor
+            {floorStatusLine(agents)}
           </p>
         </div>
         <div className="ph-filters">

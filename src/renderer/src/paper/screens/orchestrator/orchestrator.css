@@ -65,7 +65,7 @@
   display: flex;
   justify-content: space-between;
   padding: 6px 8px;
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   font-weight: var(--paper-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -95,7 +95,7 @@
 }
 .po-card:hover { border-color: var(--paper-border-strong); }
 .po-card-title {
-  font-size: 12px;
+  font-size: var(--paper-text-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -104,7 +104,7 @@
 .po-control { display: flex; flex-direction: column; gap: 18px; }
 .po-section h3 {
   margin: 0 0 6px;
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   font-weight: var(--paper-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;

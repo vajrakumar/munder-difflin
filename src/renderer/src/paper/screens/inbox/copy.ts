@@ -72,10 +72,10 @@ export const COPY = {
     all: { label: 'All', hint: 'Everything not marked done' },
     done: { label: 'Done', hint: 'Answered and archived' }
   } as Record<Folder, { label: string; hint: string }>,
-  emptyDetail: { title: 'Nothing selected', body: 'Pick a message, or press j to start at the top.' },
+  emptyDetail: { title: 'Nothing selected', body: 'Pick a message, or press j/k to move.' },
   emptyFiltered: { title: 'No matches', body: 'Try a different word, or clear the person filter.' },
   empty: {
-    needs: { title: 'Nothing needs you', body: 'Questions from agents and cards that wait on you land here.' },
+    needs: { title: 'Nothing needs you', body: 'Questions from agents and cards that wait on you land here. j/k to move when there are rows.' },
     agents: { title: 'No agent mail', body: 'Requests and updates between agents show up here.' },
     outside: { title: 'Nothing from outside', body: 'Slack threads, webhooks and other integrations land here.' },
     team: { title: 'No team messages', body: 'Team direct messages arrive here once Teams is set up.' },

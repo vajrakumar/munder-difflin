@@ -6,15 +6,24 @@ Reviewer: Dwight · 2026-10-10 · Build: `fork/main` at `3adf932d`. I served `pa
 
 | # | Pri | Status |
 | --- | --- | --- |
-| 1 | P1 | in progress |
-| 2 | P1 | open |
-| 3 | P1 | open |
-| 4 | P1 | open |
-| 5 | P1 | open |
-| 6 | P1 | open |
-| 7 | P1 | open |
-| 8 | P1 | open |
-| 9–18 | P2 | open |
+| 1 | P1 | fixed — default `system`, sun/moon menu (System/Light/Dark/HC), persisted |
+| 2 | P1 | fixed — Inspector hidden by default on Inbox; title `max-width: 760px` |
+| 3 | P1 | fixed — shell ≤1100 Inspector is a Sheet; Inbox push list→detail under 840 |
+| 4 | P1 | fixed — window-level j/k/e/r/Enter; focus `.pi-rows` on enter; empty-state hint |
+| 5 | P1 | fixed — danger only for needs-you; Question is neutral; unread is accent |
+| 6 | P1 | fixed — raw px font-size → `--paper-text-*`; `tools/check-paper-font-size.cjs` + `.stylelintrc.cjs` (skip tasks) |
+| 7 | P1 | fixed — `--paper-focus-ring` on list; palette input uses accent bottom border (DESIGN.md) |
+| 8 | P1 | fixed — Notes collapsible + horizontal splitter, agents `flex:1` min 4 rows, split persisted |
+| 9 | P2 | fixed — shared status string; `$ today` tnum; voice + account; Classic UI in account menu |
+| 10 | P2 | fixed — folder/person tooltips; icon-rail counts are dots; 180px labelled rail |
+| 11 | P2 | fixed — thread cards omit subject when it matches the header |
+| 12 | P2 | fixed — meta muted; ticket keys are accent links with hover underline |
+| 13 | P2 | fixed — Agents & notes only is a sidebar ⋯ checkbox + ⌘K action |
+| 14 | P2 | fixed — notes search uses pane `--paper-space-2` inset |
+| 15 | P2 | fixed — icons, match bold, `Kbd` shortcuts, footer, word-start rank, recents first |
+| 16 | P2 | fixed — palette scale 0.98→1 / 200ms, scrim 120ms |
+| 17 | P2 | fixed — disabled btn neutral-3/8; composer `resize:none` auto-grows to 8 lines |
+| 18 | P2 | fixed — Inspector collapses when nothing is selected (no filler) |
 | 19–25 | P3 | skipped |
 
 **How it's ranked:** P1 means it breaks a DESIGN.md rule or a core flow. P2 is a visible polish issue. P3 is a refinement. Paths are relative to `src/renderer/src/`.
