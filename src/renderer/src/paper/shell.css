@@ -96,7 +96,8 @@
   background: var(--paper-bg-subtle);
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .paper-sidebar-nav {
@@ -336,16 +337,14 @@
   background: var(--paper-accent-8);
 }
 .paper-sidebar-notes {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
   border-top: 1px solid var(--paper-border);
   padding: var(--paper-space-2);
   gap: 4px;
-}
-.paper-sidebar[data-notes-open="true"] .paper-sidebar-notes {
-  min-height: 132px;
 }
 .paper-notes-head {
   display: flex;

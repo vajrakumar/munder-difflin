@@ -373,7 +373,7 @@ export function Sidebar({
         />
       )}
 
-      <div className="paper-sidebar-notes" style={collapsed || !notesOpen ? undefined : { flexBasis: notesH, height: notesH }}>
+      <div className="paper-sidebar-notes" style={collapsed || !notesOpen ? undefined : { flex: `0 1 ${notesH}px` }}>
         <div className="paper-notes-head">
           <a
             className="paper-nav"
