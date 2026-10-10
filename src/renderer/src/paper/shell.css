@@ -483,7 +483,15 @@
   .paper-nav-label { padding-top: 6px; }
   .paper-agent-row { --paper-agent-row-h: 36px; padding-block: 2px; }
   .paper-project-h { height: 24px; }
-  .paper-sidebar-agents { min-height: calc(36px * 4 + 28px + 24px * 2 + 8px); }
+  .paper-notes-split { display: none; }
+  .paper-sidebar-notes {
+    max-height: 40px;
+    padding-block: 4px;
+  }
+  .paper-notes-search,
+  .paper-notes-list,
+  .paper-notes-empty { display: none; }
+  .paper-sidebar-agents { min-height: 280px; }
 }
 
 .paper-main-notes {

@@ -31,8 +31,8 @@ import { copyFor, currentLang } from './screens/archived/copy';
 const NOTES_HEAD = 40;
 /** Spec: notes start at ~3 rows (search + 3 titles). */
 const NOTES_DEFAULT = 132;
-/** 4×40px rows + Agents label + two project headers + padding. */
-const AGENTS_MIN = 248;
+/** 4 actual name+status rows + Agents label + two project headers + padding. */
+const AGENTS_MIN = 280;
 
 const ICONS: Record<string, typeof Home> = {
   home: Home,
