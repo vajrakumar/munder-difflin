@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-paper-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Paper tokens — Munder Difflin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../src/renderer/src/design/paper/tokens.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 32px 40px 64px;
+      font-family: var(--paper-font-ui);
+      color: var(--paper-text);
+      background: var(--paper-bg);
+    }
+    h1 {
+      font-size: var(--paper-text-display);
+      line-height: var(--paper-leading-display);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      margin: 0 0 8px;
+    }
+    .lede {
+      color: var(--paper-text-muted);
+      font-size: var(--paper-text-lg);
+      line-height: var(--paper-leading-lg);
+      max-width: 40rem;
+      margin: 0 0 28px;
+    }
+    .bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+    button.theme {
+      font: inherit;
+      font-size: var(--paper-text-sm);
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: var(--paper-radius-md);
+      border: 1px solid var(--paper-border);
+      background: var(--paper-surface);
+      color: var(--paper-text);
+      cursor: pointer;
+    }
+    button.theme[aria-pressed="true"] {
+      background: var(--paper-accent-9);
+      color: var(--paper-neutral-1);
+      border-color: transparent;
+    }
+    button.theme:focus-visible { box-shadow: var(--paper-focus-ring); outline: none; }
+    h2 {
+      font-size: var(--paper-text-xl);
+      line-height: var(--paper-leading-xl);
+      font-weight: 600;
+      margin: 40px 0 12px;
+      letter-spacing: -0.02em;
+    }
+    .row { display: flex; gap: 4px; flex-wrap: wrap; }
+    .swatch {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--paper-radius-md);
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-start;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: var(--paper-neutral-12);
+      border: 1px solid var(--paper-border);
+    }
+    .swatch.on-solid { color: var(--paper-neutral-1); border-color: transparent; }
+    .label {
+      font-size: var(--paper-text-xs);
+      color: var(--paper-text-muted);
+      margin: 0 0 8px;
+      font-weight: 500;
+    }
+    .scale { margin-bottom: 16px; }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 16px 12px 0;
+      font-size: var(--paper-text-sm);
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 99px;
+    }
+    .type-row {
+      display: grid;
+      grid-template-columns: 88px 1fr;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 10px;
+    }
+    .type-row code {
+      font-family: var(--paper-font-mono);
+      font-size: var(--paper-text-xs);
+      color: var(--paper-text-muted);
+    }
+    .cards { display: flex; gap: 16px; flex-wrap: wrap; }
+    .card {
+      width: 220px;
+      padding: 16px;
+      border-radius: var(--paper-radius-lg);
+      background: var(--paper-surface);
+      border: 1px solid var(--paper-border);
+    }
+    .card h3 { margin: 0 0 6px; font-size: var(--paper-text-md); font-weight: 600; }
+    .card p { margin: 0; font-size: var(--paper-text-sm); color: var(--paper-text-muted); }
+    .e1 { box-shadow: var(--paper-elev-1); }
+    .e2 { box-shadow: var(--paper-elev-2); }
+    .e3 { box-shadow: var(--paper-elev-3); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .btn {
+      font: inherit;
+      font-size: var(--paper-text-sm);
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--paper-radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--paper-accent-9); color: var(--paper-neutral-1); }
+    .btn-ghost { background: transparent; border-color: var(--paper-border); color: var(--paper-text); }
+    .btn-danger { background: var(--paper-danger-9); color: var(--paper-neutral-1); }
+    .kbd {
+      font-family: var(--paper-font-mono);
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: var(--paper-radius-sm);
+      border: 1px solid var(--paper-border);
+      background: var(--paper-neutral-3);
+    }
+    .radii { display: flex; gap: 12px; align-items: flex-end; }
+    .r {
+      background: var(--paper-accent-3);
+      border: 1px solid var(--paper-accent-6);
+      width: 72px;
+      height: 48px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Paper</h1>
+  <p class="lede">Token board for the fork UI. Switch theme; check contrast, type, status, elevation. Source: <code>src/renderer/src/design/paper/tokens.ts</code>.</p>
+  <div class="bar" role="group" aria-label="Theme">
+    <button class="theme" data-theme="light" aria-pressed="true">Light</button>
+    <button class="theme" data-theme="dark" aria-pressed="false">Dark</button>
+    <button class="theme" data-theme="hc" aria-pressed="false">High contrast</button>
+    <span style="margin-inline-start:12px;color:var(--paper-text-muted);font-size:13px">Focus a button: <span class="kbd">Tab</span></span>
+  </div>
+
+  <h2>Neutral</h2>
+  <div class="row" id="neutral"></div>
+  <h2>Accent</h2>
+  <div class="row" id="accent"></div>
+  <h2>Success · Warning · Danger · Info</h2>
+  <div class="scale"><div class="label">success</div><div class="row" id="success"></div></div>
+  <div class="scale"><div class="label">warning</div><div class="row" id="warning"></div></div>
+  <div class="scale"><div class="label">danger</div><div class="row" id="danger"></div></div>
+  <div class="scale"><div class="label">info</div><div class="row" id="info"></div></div>
+
+  <h2>Status</h2>
+  <div id="status"></div>
+
+  <h2>Type</h2>
+  <div class="type-row"><code>display 28</code><div style="font-size:28px;line-height:36px;font-weight:600;letter-spacing:-0.03em">The office is a tool.</div></div>
+  <div class="type-row"><code>xl 20</code><div style="font-size:20px;line-height:28px;font-weight:600">Agent rooms and the inbox</div></div>
+  <div class="type-row"><code>lg 16</code><div style="font-size:16px;line-height:24px">Composer and section titles sit here.</div></div>
+  <div class="type-row"><code>md 14</code><div style="font-size:14px;line-height:20px">Default UI text. Tabular $12.40 and 128k tokens.</div></div>
+  <div class="type-row"><code>sm 13</code><div style="font-size:13px;line-height:18px;color:var(--paper-text-muted)">Sidebar, meta, secondary.</div></div>
+  <div class="type-row"><code>xs 12</code><div style="font-size:12px;line-height:16px;font-family:var(--paper-font-mono)">src/renderer/src/design/paper</div></div>
+
+  <h2>Elevation &amp; radius</h2>
+  <div class="cards">
+    <div class="card e1"><h3>Elev 1</h3><p>Hairline. Buttons at rest, inset wells.</p></div>
+    <div class="card e2"><h3>Elev 2</h3><p>Menus, popovers, hover cards.</p></div>
+    <div class="card e3"><h3>Elev 3</h3><p>Dialogs and the command palette.</p></div>
+  </div>
+  <div class="radii" style="margin-top:20px">
+    <div class="r" style="border-radius:6px"></div>
+    <div class="r" style="border-radius:8px"></div>
+    <div class="r" style="border-radius:12px"></div>
+    <div class="r" style="border-radius:16px"></div>
+  </div>
+
+  <h2>Controls</h2>
+  <div class="btn-row">
+    <button class="btn btn-primary">Primary</button>
+    <button class="btn btn-ghost">Secondary</button>
+    <button class="btn btn-danger">Danger</button>
+  </div>
+
+  <script>
+    const scales = ['neutral', 'accent', 'success', 'warning', 'danger', 'info'];
+    const statuses = ['idle','thinking','working','waiting','blocked','success','ghost','compacting','looping','typing'];
+    function paint() {
+      for (const name of scales) {
+        const root = document.getElementById(name);
+        if (!root) continue;
+        root.innerHTML = '';
+        for (let i = 1; i <= 12; i++) {
+          const el = document.createElement('div');
+          el.className = 'swatch' + (i >= 9 && i <= 10 ? ' on-solid' : '');
+          el.style.background = 'var(--paper-' + name + '-' + i + ')';
+          el.textContent = i;
+          root.appendChild(el);
+        }
+      }
+      const st = document.getElementById('status');
+      st.innerHTML = '';
+      for (const s of statuses) {
+        const wrap = document.createElement('span');
+        wrap.className = 'status';
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.style.background = 'var(--paper-status-' + s + ')';
+        wrap.appendChild(dot);
+        wrap.appendChild(document.createTextNode(s));
+        st.appendChild(wrap);
+      }
+    }
+    paint();
+    document.querySelectorAll('button.theme').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.documentElement.dataset.paperTheme = btn.dataset.theme;
+        document.querySelectorAll('button.theme').forEach((b) => {
+          b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
