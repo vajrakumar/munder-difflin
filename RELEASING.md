@@ -165,6 +165,40 @@ What is left, grouped by the one package that would fix each group:
 Recheck with `npm audit` after any dependency change. `npm audit fix --force`
 would apply the majors above; do not run it without sign-off.
 
+## Electron 44 upgrade (2026-10-10, branch `fork/electron-44`)
+
+Electron 32.3.3 → **44.7.0** (bundled Node 24.21, native module ABI 149),
+electron-builder 25 → **26.17.0**, `@electron/rebuild` 3 → **4.2.1**.
+
+Breaking changes hit, and what changed:
+
+- **better-sqlite3 11 does not compile against Electron 44's V8**
+  (`no member named 'GetIsolate' in 'v8::Context'`). Moved to **12.11.1**.
+  No code change was needed. node-pty 1.0 builds and spawns unchanged.
+- **The main-process `clipboard` is async now.** `readText`/`writeText` return
+  Promises, `readImage` is gone, and images come from `clipboard.read()`.
+  `src/main/index.ts` awaits them. The clipboard-image paste now reads the
+  first `image/*` item through the new `readClipboardPng()`. The terminal's
+  sync paste read (`app:readClipboardSync`) assigns `returnValue` after the
+  await, and the renderer stays blocked until then. Not yet exercised with
+  a real image paste or a dictation tool.
+- electron-builder 26 says `@electron/rebuild` is "already used by
+  electron-builder". It is kept as a direct dependency because `postinstall`
+  runs `electron-rebuild -f`.
+
+`npm audit` after the bump: **20 (0 critical, 10 high, 10 moderate)**, down from
+30. Electron itself is no longer flagged. What is left: the tunnel packages
+(tunnelmole/localtunnel, separate card), Vite 5 / electron-vite 2 (waiting on
+the Vite 8 bump), and `@electron/get`'s `global-agent`/`roarr`/`sprintf-js`
+chain under electron-builder 26 (build-time, moderate).
+
+Building inside an agent sandbox: Node 22.18's `fetch` ignores
+`HTTPS_PROXY`, so the Electron download and header fetch fail with
+`fetch failed`. Either download `electron-v<ver>-darwin-arm64.zip` with curl
+(check it against `SHASUMS256.txt`) and unpack it into
+`node_modules/electron/dist`, or preload undici's `EnvHttpProxyAgent` via
+`NODE_OPTIONS=--require …` when running `electron-rebuild`.
+
 ## Licences to carry into any build you share
 
 - **Source: MIT** (`LICENSE`), © 2026 Chaitanya Giri. Keep the copyright and
