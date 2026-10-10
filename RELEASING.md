@@ -199,6 +199,50 @@ Building inside an agent sandbox: Node 22.18's `fetch` ignores
 `node_modules/electron/dist`, or preload undici's `EnvHttpProxyAgent` via
 `NODE_OPTIONS=--require …` when running `electron-rebuild`.
 
+## Tunnels (MDF-43, branch `fork/mdf-43-tunnels`)
+
+The Slack and webhook servers (`src/main/slack.ts`, `webhook.ts`) open a public
+URL with **tunnelmole** (free service, no account). Its 7 audit findings and
+localtunnel's 2 had no upstream fix.
+
+| Option | Account? | Effort / risk | Verdict |
+| --- | --- | --- | --- |
+| **npm `overrides` on tunnelmole's unused deps + drop localtunnel** | No | Small. Same service, same code path | **Chosen** |
+| cloudflared quick tunnel (`trycloudflare.com`) | No (quick tunnels) | Ships or downloads a ~40 MB Go binary per platform, and needs a new spawn/parse layer. Random URL per run, like now | Later, if tunnelmole dies |
+| ngrok | Yes (authtoken) | SDK + account management | Not without sign-off |
+| Own relay (VPS + websocket) | Hosting | Most control, most to run and secure | Not now |
+
+What changed:
+
+- **localtunnel removed** (and `@types/localtunnel`). Nothing in `src/` used it.
+- **tunnelmole overrides** (`package.json` → `overrides.tunnelmole`): `toml` →
+  `npm:@iarna/toml@2.2.5` and `@types/jest` → `30.0.0`. tunnelmole 2.4.0 never
+  loads either at run time: `toml` appears only in its bundled test server, and
+  `@types/jest` is type declarations. `@iarna/toml` has the same `parse()`, so
+  nothing breaks even if that changes. Use registry specs only: a `file:`
+  override leaves `package-lock.json` out of sync and `npm ci` refuses it.
+- `npm audit`: **20 → 11** (0 critical, 1 high = Vite 5, 10 moderate,
+  build-time). No tunnel package is flagged.
+
+Tests (`test/tunnel.test.cjs`): offline, it checks localtunnel is gone, that
+tunnelmole resolves the overridden packages, and that it still loads the way
+the app loads it. Opt-in live round trip:
+
+```bash
+MD_TUNNEL_LIVE=1 node --test --test-force-exit test/tunnel.test.cjs
+```
+
+That opens real tunnels to throwaway local `WebhookServer` and
+`SlackWebhookServer` instances and POSTs through the public URL. Expected
+answers: 401 from the webhook handler, 403 from Slack signature checking. Run
+it outside an agent sandbox: tunnelmole's websocket and Node's `fetch` ignore
+`HTTPS_PROXY`. `--test-force-exit` is needed because tunnelmole has no close
+handle.
+
+Known limits, unchanged: tunnelmole has had no release since June 2025, URLs
+change on every start, and there is no teardown (the tunnel lives until the
+app quits).
+
 ## Licences to carry into any build you share
 
 - **Source: MIT** (`LICENSE`), © 2026 Chaitanya Giri. Keep the copyright and
