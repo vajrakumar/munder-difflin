@@ -5,6 +5,7 @@ import {
 import { applyPaperTheme, paperThemeFromRoot, type PaperTheme } from '@/design/paper';
 import { Avatar, Button, EmptyState, IconButton, Kbd, Tooltip, TooltipProvider } from '@/ui';
 import { setClassicUi } from './classicFlag';
+import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
 import { NAV, hrefFor, parseHash, type PaperRoute } from './routes';
 import './shell.css';
 
@@ -53,7 +54,9 @@ export function PaperApp(): JSX.Element {
     try { return Number(localStorage.getItem('paper.sidebarWidth')) || 248; } catch { return 248; }
   });
   const [inspector, setInspector] = useState(true);
+  const [palette, setPalette] = useState(false);
   const drag = useRef(false);
+  useCommandPaletteHotkey(() => setPalette((v) => !v));
 
   useEffect(() => {
     applyPaperTheme(theme);
@@ -90,7 +93,7 @@ export function PaperApp(): JSX.Element {
       <div className="paper-shell">
         <header className="paper-titlebar">
           <span className="paper-titlebar-brand">Munder Difflin</span>
-          <button type="button" className="paper-titlebar-search" onClick={() => { /* MDF-9 */ }}>
+          <button type="button" className="paper-titlebar-search" onClick={() => setPalette(true)}>
             Search or jump
             <Kbd>⌘K</Kbd>
           </button>
@@ -180,6 +183,7 @@ export function PaperApp(): JSX.Element {
             <p className="lede">{copy.lede}</p>
             <EmptyState title="Not wired yet" description="This screen is a routed slot. Data hooks up in Phase 1." />
           </main>
+          <CommandPalette open={palette} onOpenChange={setPalette} />
           {inspector ? (
             <aside className="paper-inspector">
               <h2>Inspector</h2>
