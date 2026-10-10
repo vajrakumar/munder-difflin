@@ -11,6 +11,7 @@ export { Dialog, DialogTrigger, DialogClose, DialogContent } from './Dialog';
 export { Sheet, SheetTrigger, SheetClose, SheetContent } from './Sheet';
 export { Popover, PopoverTrigger, PopoverContent } from './Popover';
 export { Tooltip, TooltipProvider } from './Tooltip';
+export { HoverCard } from './HoverCard';
 export { Menu, MenuTrigger, MenuContent, MenuItem } from './Menu';
 export { ToastProvider, useToast } from './Toast';
 export { Badge } from './Badge';

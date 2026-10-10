@@ -177,6 +177,32 @@
   z-index: 60;
 }
 
+.paper-hover-card {
+  width: 280px;
+  padding: 12px;
+  background: var(--paper-surface);
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-lg);
+  box-shadow: var(--paper-elev-2);
+  z-index: 55;
+}
+
+.paper-textarea {
+  width: 100%;
+  min-height: 240px;
+  padding: 10px 12px;
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-md);
+  background: var(--paper-surface);
+  color: var(--paper-text);
+  font-family: var(--paper-font-ui);
+  font-size: var(--paper-text-sm);
+  line-height: var(--paper-leading-md);
+  resize: vertical;
+}
+.paper-textarea:focus { outline: none; box-shadow: var(--paper-focus-ring); }
+.paper-textarea::placeholder { color: var(--paper-text-muted); }
+
 .paper-badge {
   display: inline-flex;
   align-items: center;

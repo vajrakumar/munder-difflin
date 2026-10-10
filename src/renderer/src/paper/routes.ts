@@ -10,6 +10,12 @@ export type PaperRoute =
   | 'notes'
   | 'agent';
 
+export type PaperLocation = {
+  route: PaperRoute;
+  agentId?: string;
+  noteId?: string;
+};
+
 export const NAV: Array<{ id: PaperRoute; label: string; hint?: string }> = [
   { id: 'inbox', label: 'Inbox', hint: 'Needs you' },
   { id: 'tasks', label: 'Tasks' },
@@ -20,10 +26,11 @@ export const NAV: Array<{ id: PaperRoute; label: string; hint?: string }> = [
   { id: 'stapler', label: 'Stapler' }
 ];
 
-export function parseHash(hash: string): { route: PaperRoute; agentId?: string } {
+export function parseHash(hash: string): PaperLocation {
   const raw = hash.replace(/^#\/?/, '');
   const [head, rest] = raw.split('/');
   if (head === 'agent' && rest) return { route: 'agent', agentId: rest };
+  if (head === 'notes' && rest) return { route: 'notes', noteId: rest };
   const ids = new Set(NAV.map((n) => n.id));
   ids.add('home');
   ids.add('notes');
@@ -31,8 +38,9 @@ export function parseHash(hash: string): { route: PaperRoute; agentId?: string }
   return { route: 'home' };
 }
 
-export function hrefFor(route: PaperRoute, agentId?: string): string {
-  if (route === 'agent' && agentId) return `#/agent/${agentId}`;
+export function hrefFor(route: PaperRoute, id?: string): string {
+  if (route === 'agent' && id) return `#/agent/${id}`;
+  if (route === 'notes' && id) return `#/notes/${id}`;
   if (route === 'home') return '#/';
   return `#/${route}`;
 }

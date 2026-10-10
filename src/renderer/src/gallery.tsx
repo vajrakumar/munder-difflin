@@ -41,6 +41,7 @@ import {
   ToastProvider,
   Tooltip,
   TooltipProvider,
+  HoverCard,
   Tabs,
   TabsContent,
   TabsList,
@@ -186,6 +187,18 @@ function Gallery(): JSX.Element {
           <StatusRing status="working"><Avatar name="Developer" size="lg" /></StatusRing>
           <StatusRing status="blocked"><Avatar name="Tester" /></StatusRing>
           <StatusRing status="thinking"><Avatar name="Dwight" /></StatusRing>
+          <HoverCard
+            content={
+              <div>
+                <strong>MDF-11</strong>
+                <p style={{ margin: '4px 0 0', color: 'var(--paper-text-muted)', fontSize: 13 }}>
+                  Pro sidebar · asked you · live line
+                </p>
+              </div>
+            }
+          >
+            <Button size="sm" variant="secondary">Hover card</Button>
+          </HoverCard>
           <Badge>idle</Badge>
           <Badge tone="accent">waiting</Badge>
           <Badge tone="warning">working</Badge>

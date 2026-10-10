@@ -1,3 +1,4 @@
+import { DEFAULT_AGENTS } from './demoData';
 import { hrefFor, type PaperRoute } from './routes';
 
 export type PaperAction = {
@@ -50,24 +51,19 @@ export function defaultActions(opts?: {
         toast('Spawn is not wired in the Paper shell yet');
       }
     },
-    {
-      id: 'agent.michael',
-      label: 'Open Michael',
+    ...DEFAULT_AGENTS.map((a) => ({
+      id: `agent.${a.id}`,
+      label: `Open ${a.name}`,
       group: 'Agents',
-      keywords: 'god orchestrator',
-      run: () => go('agent', 'god')
-    },
+      keywords: `${a.role} ${a.projectId} ${a.ticket?.key ?? ''}`,
+      run: () => go('agent', a.id)
+    })),
     {
-      id: 'agent.developer',
-      label: 'Open Developer',
-      group: 'Agents',
-      run: () => go('agent', 'developer-mv2fn62v')
-    },
-    {
-      id: 'agent.tester',
-      label: 'Open Tester',
-      group: 'Agents',
-      run: () => go('agent', 'tester-mv2fnyz5')
+      id: 'note.new',
+      label: 'New note',
+      group: 'Notes',
+      keywords: 'write private',
+      run: () => go('notes')
     },
     {
       id: 'memory.search',

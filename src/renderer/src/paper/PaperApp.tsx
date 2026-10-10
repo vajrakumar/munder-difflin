@@ -1,38 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Inbox, ListTodo, Timer, Brain, Puzzle, Users, CircleDot, StickyNote, Home, PanelRight
-} from 'lucide-react';
+import { PanelRight } from 'lucide-react';
 import { applyPaperTheme, paperThemeFromRoot, type PaperTheme } from '@/design/paper';
 import { Avatar, Badge, Button, EmptyState, IconButton, Kbd, StatusRing, Tooltip, TooltipProvider } from '@/ui';
+import { APP_DISPLAY_NAME } from '@shared/forkIdentity';
 import { setClassicUi } from './classicFlag';
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
-import { NAV, hrefFor, parseHash, type PaperRoute } from './routes';
+import { NotesPane } from './NotesPane';
+import { hrefFor, parseHash, type PaperRoute } from './routes';
 import { SCREENS } from './screens';
 import { useInboxNeedsYou } from './screens/inbox/badge';
+import { Sidebar } from './Sidebar';
+import { useProSidebar } from './sidebarState';
 import './shell.css';
 
-const ICONS: Record<string, typeof Home> = {
-  home: Home,
-  inbox: Inbox,
-  tasks: ListTodo,
-  automations: Timer,
-  memory: Brain,
-  capabilities: Puzzle,
-  temps: Users,
-  stapler: CircleDot,
-  notes: StickyNote
-};
-
-const DEMO_AGENTS = [
-  { id: 'god', name: 'Michael', line: 'idle' as const },
-  { id: 'developer-mv2fn62v', name: 'Developer', line: 'working' as const },
-  { id: 'tester-mv2fnyz5', name: 'Tester', line: 'waiting' as const }
-];
-
-function screenCopy(route: PaperRoute, agentId?: string): { title: string; lede: string } {
+function screenCopy(route: PaperRoute, agentName?: string): { title: string; lede: string } {
   if (route === 'agent') {
-    const a = DEMO_AGENTS.find((x) => x.id === agentId);
-    return { title: a?.name ?? 'Agent', lede: 'Agent room lands in MDF-13. Terminal + overview, messages, tasks.' };
+    return {
+      title: agentName ?? 'Agent',
+      lede: 'Agent room lands in MDF-13. Terminal + overview, messages, tasks.'
+    };
   }
   const map: Record<PaperRoute, { title: string; lede: string }> = {
     home: { title: 'Home', lede: 'Live agent tiles land in MDF-12. Office view stays optional.' },
@@ -43,7 +29,7 @@ function screenCopy(route: PaperRoute, agentId?: string): { title: string; lede:
     capabilities: { title: 'Capabilities', lede: 'Marketplace and who-has-what — MDF-19.' },
     temps: { title: 'Temps', lede: 'History of short-lived workers — MDF-20.' },
     stapler: { title: 'Stapler', lede: 'Floating ring and captures — MDF-25.' },
-    notes: { title: 'Notes', lede: 'Private searchable notes on the Pro sidebar — MDF-11.' },
+    notes: { title: 'Notes', lede: 'Private, searchable, on this machine.' },
     agent: { title: 'Agent', lede: '' }
   };
   return map[route];
@@ -53,13 +39,15 @@ export function PaperApp(): JSX.Element {
   const [loc, setLoc] = useState(() => parseHash(window.location.hash));
   const [theme, setTheme] = useState<PaperTheme>(() => paperThemeFromRoot());
   const [sidebar, setSidebar] = useState(() => {
-    try { return Number(localStorage.getItem('paper.sidebarWidth')) || 248; } catch { return 248; }
+    try { return Number(localStorage.getItem('paper.sidebarWidth')) || 280; } catch { return 280; }
   });
   const [inspector, setInspector] = useState(true);
   const [palette, setPalette] = useState(false);
+  const [noteQuery, setNoteQuery] = useState('');
   const drag = useRef(false);
-  useCommandPaletteHotkey(() => setPalette((v) => !v));
+  const rail = useProSidebar();
   const needsYou = useInboxNeedsYou();
+  useCommandPaletteHotkey(() => setPalette((v) => !v));
 
   useEffect(() => {
     applyPaperTheme(theme);
@@ -78,7 +66,7 @@ export function PaperApp(): JSX.Element {
 
   const onMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!drag.current) return;
-    const next = Math.min(360, Math.max(64, e.clientX));
+    const next = Math.min(420, Math.max(64, e.clientX));
     setSidebar(next);
   }, []);
 
@@ -88,21 +76,53 @@ export function PaperApp(): JSX.Element {
     try { localStorage.setItem('paper.sidebarWidth', String(sidebar)); } catch { /* noop */ }
   }, [sidebar]);
 
-  const copy = useMemo(() => screenCopy(loc.route, loc.agentId), [loc]);
-  const Screen = SCREENS[loc.route];
+  const agent = rail.agents.find((a) => a.id === loc.agentId);
+  const note = rail.notes.find((n) => n.id === loc.noteId);
+  const copy = useMemo(
+    () => screenCopy(loc.route, agent?.name),
+    [loc.route, agent?.name]
+  );
   const collapsed = sidebar <= 72;
+  const liveCount = rail.agents.filter((a) =>
+    a.status === 'working' || a.status === 'thinking' || a.status === 'looping'
+  ).length;
+  const askedCount = rail.agents.filter((a) => a.askedYou).length;
+  const Screen = SCREENS[loc.route];
+
+  function goNote(id: string): void {
+    window.location.hash = hrefFor('notes', id);
+  }
+
+  function handleNewNote(): void {
+    const n = rail.createNote();
+    goNote(n.id);
+  }
+
+  function handleDeleteNote(id: string): void {
+    rail.removeNote(id);
+    window.location.hash = hrefFor('notes');
+  }
+
+  const extraActions = rail.notes.map((n) => ({
+    id: `note.${n.id}`,
+    label: `Note: ${n.title || 'Untitled'}`,
+    group: 'Notes',
+    run: () => goNote(n.id)
+  }));
 
   return (
     <TooltipProvider>
       <div className="paper-shell">
         <header className="paper-titlebar">
-          <span className="paper-titlebar-brand">Munder Difflin</span>
+          <span className="paper-titlebar-brand">{APP_DISPLAY_NAME}</span>
           <button type="button" className="paper-titlebar-search" onClick={() => setPalette(true)}>
             Search or jump
             <Kbd>⌘K</Kbd>
           </button>
           <span className="paper-titlebar-spacer" />
-          <span className="paper-titlebar-meta">{DEMO_AGENTS.length} agents · $0.00 today</span>
+          <span className="paper-titlebar-meta">
+            {liveCount} live · {askedCount} asked · {rail.agents.length} agents
+          </span>
           <Button
             size="sm"
             variant="ghost"
@@ -120,74 +140,50 @@ export function PaperApp(): JSX.Element {
           </IconButton>
         </header>
         <div className="paper-body">
-          <aside className="paper-sidebar" style={{ width: sidebar }}>
-            <nav className="paper-sidebar-nav">
-              <a
-                className="paper-nav"
-                href={hrefFor('home')}
-                aria-current={loc.route === 'home' ? 'page' : undefined}
-              >
-                <Home size={16} />
-                {collapsed ? null : 'Home'}
-              </a>
-              {NAV.map((item) => {
-                const Icon = ICONS[item.id] ?? Home;
-                return (
-                  <a
-                    key={item.id}
-                    className="paper-nav"
-                    href={hrefFor(item.id)}
-                    aria-current={loc.route === item.id ? 'page' : undefined}
-                  >
-                    <Icon size={16} />
-                    {collapsed ? null : item.label}
-                    {item.id === 'inbox' && needsYou > 0 ? (
-                      <Badge tone="danger" className="paper-nav-count" aria-label={`${needsYou} need you`}>{needsYou}</Badge>
-                    ) : !collapsed && item.hint ? <span className="paper-nav-badge">{item.hint}</span> : null}
-                  </a>
-                );
-              })}
-              <div className="paper-nav-label">{collapsed ? '·' : 'Agents'}</div>
-              {DEMO_AGENTS.map((a) => (
-                <a
-                  key={a.id}
-                  className="paper-agent-row"
-                  href={hrefFor('agent', a.id)}
-                  aria-current={loc.route === 'agent' && loc.agentId === a.id ? 'page' : undefined}
-                >
-                  <StatusRing status={a.line}>
-                    <Avatar name={a.name} size="sm" />
-                  </StatusRing>
-                  {collapsed ? null : a.name}
-                  {collapsed ? null : <span className="paper-agent-live">{a.line}</span>}
-                </a>
-              ))}
-              <a
-                className="paper-nav"
-                href={hrefFor('notes')}
-                aria-current={loc.route === 'notes' ? 'page' : undefined}
-              >
-                <StickyNote size={16} />
-                {collapsed ? null : 'Notes'}
-              </a>
-            </nav>
-          </aside>
+          <div className="paper-sidebar-wrap" style={{ width: sidebar }}>
+            <Sidebar
+              loc={loc}
+              collapsed={collapsed}
+              agentsOnly={rail.agentsOnly}
+              onAgentsOnly={rail.setAgentsOnly}
+              grouped={rail.grouped}
+              collapsedProjects={rail.collapsedProjects}
+              onToggleProject={rail.toggleProject}
+              onMoveAgent={rail.moveAgent}
+              notes={rail.notes}
+              noteQuery={noteQuery}
+              onNoteQuery={setNoteQuery}
+              onNewNote={handleNewNote}
+              activeNoteId={loc.noteId}
+              inboxCount={needsYou}
+            />
+          </div>
           <div
             className="paper-sidebar-handle"
             role="separator"
             aria-orientation="vertical"
             aria-valuenow={sidebar}
+            aria-label="Resize sidebar"
             tabIndex={0}
             onPointerDown={onHandle}
             onPointerMove={onMove}
             onPointerUp={onUp}
             onKeyDown={(e) => {
               if (e.key === 'ArrowLeft') setSidebar((w) => Math.max(64, w - 16));
-              if (e.key === 'ArrowRight') setSidebar((w) => Math.min(360, w + 16));
+              if (e.key === 'ArrowRight') setSidebar((w) => Math.min(420, w + 16));
             }}
           />
-          <main className="paper-main">
-            {Screen ? <Screen /> : (
+          <main id="paper-main" className={loc.route === 'notes' ? 'paper-main paper-main-notes' : 'paper-main'}>
+            {loc.route === 'notes' ? (
+              <NotesPane
+                note={note}
+                onChange={rail.upsertNote}
+                onDelete={handleDeleteNote}
+                onCreate={handleNewNote}
+              />
+            ) : Screen ? (
+              <Screen />
+            ) : (
               <>
                 <h1>{copy.title}</h1>
                 <p className="lede">{copy.lede}</p>
@@ -195,13 +191,39 @@ export function PaperApp(): JSX.Element {
               </>
             )}
           </main>
-          <CommandPalette open={palette} onOpenChange={setPalette} />
+          <CommandPalette open={palette} onOpenChange={setPalette} extra={extraActions} />
           {inspector ? (
             <aside className="paper-inspector">
-              <h2>Inspector</h2>
-              <p className="lede" style={{ margin: 0 }}>
-                Context for the current selection. Empty until a card is picked.
-              </p>
+              {agent ? (
+                <>
+                  <h2>{agent.name}</h2>
+                  <div className="paper-inspector-agent">
+                    <StatusRing status={agent.status}>
+                      <Avatar name={agent.name} />
+                    </StatusRing>
+                    <p className="lede">{agent.line}</p>
+                    {agent.askedYou ? <Badge tone="danger">Asked you</Badge> : null}
+                    {agent.ticket ? (
+                      <p>
+                        <Badge tone="accent">{agent.ticket.key}</Badge> {agent.ticket.title}
+                      </p>
+                    ) : null}
+                  </div>
+                </>
+              ) : note ? (
+                <>
+                  <h2>Note</h2>
+                  <p className="lede">{note.title}</p>
+                  <p>{note.body.slice(0, 180) || 'Empty'}</p>
+                </>
+              ) : (
+                <>
+                  <h2>Inspector</h2>
+                  <p className="lede">
+                    Hover an agent for ticket details. Drag to reorder. Notes live at the bottom of the rail.
+                  </p>
+                </>
+              )}
             </aside>
           ) : null}
         </div>
@@ -209,4 +231,3 @@ export function PaperApp(): JSX.Element {
     </TooltipProvider>
   );
 }
-
