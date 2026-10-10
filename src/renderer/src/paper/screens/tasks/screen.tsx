@@ -127,7 +127,7 @@ export function Screen(): JSX.Element {
                 {floor.mode === 'live' ? 'Live' : 'Demo'}
               </span>
               <span>{visible.length} of {floor.tasks.length} cards</span>
-              <span>{counts.doing} doing · {counts.blocked} blocked</span>
+              <span>{counts.doing} doing · {counts.blocked} blocked · {counts.done} done</span>
             </p>
           </div>
           <div className="pt-views" role="group" aria-label="Task view">
@@ -323,7 +323,7 @@ function Card({
         ) : null}
         {ask ? <Badge tone="danger">Asked you</Badge> : null}
       </div>
-      <p className="pt-card-title">{task.title}</p>
+      <p className="pt-card-title" title={task.title}>{task.title}</p>
       <div className="pt-card-meta">
         {task.assignee ? <Avatar name={nameOf(task.assignee)} size="sm" /> : null}
         {task.size ? <Badge>{task.size}</Badge> : null}
@@ -410,6 +410,13 @@ function List({
   );
 }
 
+type GanttLine =
+  | { kind: 'group'; id: string; label: string }
+  | { kind: 'task'; task: PaperTask };
+
+const GROUP_H = 28;
+const TASK_H = 36;
+
 function Timeline({
   tasks, agents, index, nameOf, currentId
 }: {
@@ -420,41 +427,75 @@ function Timeline({
   currentId: string | null;
 }): JSX.Element {
   const now = Date.now();
-  const rows = useMemo(
-    () => groupTimeline(tasks, agents, nameOf).flatMap((g) => g.tasks),
-    [tasks, agents, nameOf]
-  );
+  const lines = useMemo((): GanttLine[] => {
+    const out: GanttLine[] = [];
+    for (const g of groupTimeline(tasks, agents, nameOf)) {
+      if (!g.tasks.length) continue;
+      out.push({ kind: 'group', id: g.id, label: g.label });
+      for (const t of g.tasks) out.push({ kind: 'task', task: t });
+    }
+    return out;
+  }, [tasks, agents, nameOf]);
+  const rows = useMemo(() => lines.filter((l): l is { kind: 'task'; task: PaperTask } => l.kind === 'task').map((l) => l.task), [lines]);
+  const topAt = useMemo(() => {
+    const tops: number[] = [];
+    let y = 0;
+    for (const l of lines) {
+      tops.push(y);
+      y += l.kind === 'group' ? GROUP_H : TASK_H;
+    }
+    return tops;
+  }, [lines]);
+  const stackH = Math.max(topAt.length ? topAt[topAt.length - 1] + (lines[lines.length - 1]?.kind === 'group' ? GROUP_H : TASK_H) : TASK_H, TASK_H);
   const range = useMemo(() => axis(rows, now), [rows, now]);
   const marks = useMemo(() => ticks(range.start, range.end), [range]);
-  const edges = useMemo(() => depEdges(rows, index, range.start, range.end, now), [rows, index, range, now]);
-  const template = `32px repeat(${Math.max(rows.length, 1)}, 36px)`;
+  const rawEdges = useMemo(() => depEdges(rows, index, range.start, range.end, now), [rows, index, range, now]);
+  const taskTop = useMemo(() => {
+    const m = new Map<string, number>();
+    lines.forEach((l, i) => { if (l.kind === 'task') m.set(l.task.id, topAt[i]); });
+    return m;
+  }, [lines, topAt]);
+  const edges = useMemo(() => rawEdges.map((e) => ({
+    ...e,
+    y1: (((taskTop.get(e.from) ?? 0) + TASK_H / 2) / stackH) * 100,
+    y2: (((taskTop.get(e.to) ?? 0) + TASK_H / 2) / stackH) * 100
+  })), [rawEdges, taskTop, stackH]);
+  const template = `32px ${lines.length ? lines.map((l) => `${l.kind === 'group' ? GROUP_H : TASK_H}px`).join(' ') : '36px'}`;
 
   return (
     <div className="pt-gantt" style={{ gridTemplateRows: template } as CSSProperties} role="region" aria-label="Task timeline">
       <div className="pt-gantt-corner">Ticket</div>
       <div className="pt-gantt-axis">
-        {marks.map((m) => (
-          <span
-            key={m.t}
-            className="pt-tick"
-            style={{ insetInlineStart: `${pct(m.t, range.start, range.end)}%` }}
-          >
-            {m.label}
-          </span>
-        ))}
+        {marks.map((m, i) => {
+          const x = pct(m.t, range.start, range.end);
+          if (i === marks.length - 1 && x > 92) return null;
+          const edge = i === 0 ? 'start' : i === marks.length - 1 ? 'end' : undefined;
+          return (
+            <span
+              key={m.t}
+              className="pt-tick"
+              data-edge={edge}
+              style={{ insetInlineStart: `${x}%` }}
+            >
+              {m.label}
+            </span>
+          );
+        })}
       </div>
-      {rows.map((t, i) => (
+      {lines.map((l, i) => l.kind === 'group' ? (
+        <div key={`g-${l.id}`} className="pt-gantt-group" style={{ gridRow: i + 2 }}>{l.label}</div>
+      ) : (
         <button
-          key={t.id}
+          key={l.task.id}
           type="button"
           className="pt-gantt-id"
           style={{ gridRow: i + 2 }}
-          aria-current={t.id === currentId || undefined}
-          onClick={() => openTask(t)}
+          aria-current={l.task.id === currentId || undefined}
+          onClick={() => openTask(l.task)}
         >
-          {t.assignee ? <Avatar name={nameOf(t.assignee)} size="sm" /> : null}
-          <span className="pc-key">{t.key}</span>
-          <span className="pt-gantt-title">{t.title}</span>
+          {l.task.assignee ? <Avatar name={nameOf(l.task.assignee)} size="sm" /> : null}
+          <span className="pc-key">{l.task.key}</span>
+          <span className="pt-gantt-title" title={l.task.title}>{l.task.title}</span>
         </button>
       ))}
       <div className="pt-gantt-stack">
@@ -470,11 +511,13 @@ function Timeline({
             <line key={`${e.from}-${e.to}`} x1={`${e.x1}%`} y1={`${e.y1}%`} x2={`${e.x2}%`} y2={`${e.y2}%`} />
           ))}
         </svg>
-        {rows.map((t, i) => {
+        {lines.map((l, i) => {
+          if (l.kind !== 'task') return null;
+          const t = l.task;
           const s = span(t, now);
           const x = pct(s.start, range.start, range.end);
           const w = Math.max(s.point ? 0 : pct(s.end, range.start, range.end) - x, 0);
-          const top = s.point ? i * 36 + 13 : i * 36 + 8;
+          const top = s.point ? topAt[i] + 13 : topAt[i] + 8;
           return (
             <button
               key={t.id}
@@ -482,7 +525,8 @@ function Timeline({
               className="pt-span"
               data-status={t.status}
               data-point={s.point ? 'true' : 'false'}
-              aria-label={`${t.key} ${STATUS_LABEL[t.status]}`}
+              aria-label={`${t.key} ${t.title} ${STATUS_LABEL[t.status]}`}
+              title={`${t.key} ${t.title}`}
               style={{ top, '--pt-x': `${x}%`, '--pt-w': s.point ? '10px' : `${Math.max(w, 0.8)}%` } as CSSProperties}
               onClick={() => openTask(t)}
             />

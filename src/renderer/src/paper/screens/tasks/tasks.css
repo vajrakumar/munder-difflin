@@ -2,9 +2,10 @@
 
 .pt-root {
   padding: 16px 20px 20px;
-  overflow: auto;
+  overflow: hidden;
   gap: 16px;
   background: var(--paper-bg);
+  min-height: 0;
 }
 
 .pt-toolbar {
@@ -66,6 +67,15 @@
 .pt-body {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.pt-body > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* ── Board ────────────────────────────────────────────── */
@@ -73,19 +83,23 @@
   display: flex;
   gap: 10px;
   align-items: stretch;
-  min-height: 420px;
+  min-width: 0;
+  width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   padding-block-end: 8px;
+  scrollbar-gutter: stable;
 }
 .pt-col {
   flex: 1 1 240px;
   min-width: 240px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--paper-neutral-2);
   border: 1px solid var(--paper-border);
   border-radius: var(--paper-radius-lg);
-  max-height: min(640px, 70vh);
+  max-height: 100%;
 }
 .pt-col[data-over="true"] {
   border-color: var(--paper-accent-8);
@@ -271,6 +285,8 @@
   white-space: nowrap;
   pointer-events: none;
 }
+.pt-tick[data-edge="start"] { transform: none; }
+.pt-tick[data-edge="end"] { transform: translateX(-100%); }
 .pt-gantt-id {
   grid-column: 1;
   display: flex;
@@ -290,6 +306,21 @@
 }
 .pt-gantt-id:hover, .pt-gantt-id[aria-current="true"] { background: var(--paper-neutral-3); }
 .pt-gantt-id:focus-visible { outline: none; box-shadow: var(--paper-focus-ring); }
+.pt-gantt-group {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: var(--paper-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--paper-text-muted);
+  background: var(--paper-neutral-2);
+  border-block-end: 1px solid var(--paper-border);
+  z-index: 1;
+}
 .pt-gantt-title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -450,7 +481,6 @@
 
 @container screen (max-width: 720px) {
   .pt-search .paper-input { width: 140px; }
-  .pt-board { overflow: visible; }
 }
 
 [dir="rtl"] .pt-card::before {
@@ -458,3 +488,5 @@
 }
 [dir="rtl"] .pt-span[data-point="true"] { transform: translateX(50%); }
 [dir="rtl"] .pt-tick { transform: translateX(50%); }
+[dir="rtl"] .pt-tick[data-edge="start"] { transform: none; }
+[dir="rtl"] .pt-tick[data-edge="end"] { transform: translateX(100%); }
