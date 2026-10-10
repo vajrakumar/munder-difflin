@@ -517,7 +517,7 @@ function CapabilitiesInner(): JSX.Element {
                 </THead>
                 <TBody>
                   {installedShown.map((cap, i) => {
-                    const users = usedBy(store.grants, cap.id, agents.filter((a) => !a.id.startsWith('demo-agent-')));
+                    const users = usedBy(store.grants, cap.id, agents);
                     const names = users.slice(0, 3).map((a) => a.name);
                     return (
                       <TR key={cap.id} data-selected={i === selectedInstalled ? 'true' : undefined}>
@@ -536,13 +536,23 @@ function CapabilitiesInner(): JSX.Element {
                         <TD>
                           <div className="pcp-actions">
                             {cap.kind === 'skill' ? (
-                              <Tooltip content={COPY.reveal}>
-                                <Button size="sm" variant="ghost" onClick={() => void onReveal(cap)}>
+                              <Tooltip content={COPY.revealNamed(cap.name)}>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  aria-label={COPY.revealNamed(cap.name)}
+                                  onClick={() => void onReveal(cap)}
+                                >
                                   <FolderOpen size={14} /> {COPY.reveal}
                                 </Button>
                               </Tooltip>
                             ) : null}
-                            <Button size="sm" variant="danger" onClick={() => setUninstallCapState(cap)}>
+                            <Button
+                              size="sm"
+                              variant="danger"
+                              aria-label={COPY.uninstallNamed(cap.name)}
+                              onClick={() => setUninstallCapState(cap)}
+                            >
                               <Trash2 size={14} /> {COPY.uninstall}
                             </Button>
                           </div>
@@ -583,8 +593,12 @@ function CapabilitiesInner(): JSX.Element {
                 <Button size="sm" variant="secondary" onClick={() => fillBundle(false)}>{COPY.bundleFill}</Button>
                 <Button size="sm" variant="secondary" onClick={() => fillBundle(true)}>{COPY.bundleFillAll}</Button>
                 <Button size="sm" variant="ghost" onClick={() => setBundleOpen(true)}>{COPY.bundleSave}</Button>
+                <span className="pcp-matrix-count" role="status">
+                  {COPY.matrixSize(agents.length, columns.length)}
+                  {columns.length > 12 ? ` · ${COPY.matrixScroll}` : ''}
+                </span>
               </div>
-              <div className="pcp-matrix-wrap" tabIndex={0} aria-label={COPY.tabs.matrix}>
+              <div className="pcp-matrix-wrap" tabIndex={0} aria-label={`${COPY.tabs.matrix}. ${COPY.matrixSize(agents.length, columns.length)}. ${COPY.matrixScroll}`}>
                 <table className="pcp-matrix">
                   <thead>
                     <tr>

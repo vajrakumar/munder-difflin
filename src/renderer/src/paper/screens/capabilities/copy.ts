@@ -114,5 +114,10 @@ export const COPY = {
   agentCol: 'Agent',
   dirty: 'Queued',
   countMarket: (n: number) => (n === 1 ? '1 item' : `${n} items`),
-  countInstalled: (n: number) => (n === 1 ? '1 installed' : `${n} installed`)
+  countInstalled: (n: number) => (n === 1 ? '1 installed' : `${n} installed`),
+  matrixSize: (agents: number, caps: number) =>
+    `${agents} ${agents === 1 ? 'agent' : 'agents'} · ${caps} ${caps === 1 ? 'capability' : 'capabilities'}`,
+  matrixScroll: 'Scroll sideways for more columns',
+  revealNamed: (name: string) => `Reveal ${name}`,
+  uninstallNamed: (name: string) => `Uninstall ${name}`
 };
