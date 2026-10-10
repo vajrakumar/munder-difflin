@@ -262,6 +262,13 @@ function PaperShell(): JSX.Element {
       keywords: 'window monitor ide terminal office',
       shortcut: '⌘⇧D',
       run: () => { toggleDetach(focusedViewFromRoute(loc.route, loc.agentId)); }
+    },
+    {
+      id: 'view.classic',
+      label: 'Classic UI',
+      group: 'View',
+      keywords: 'pixel office command center',
+      run: () => setClassicUi(true)
     }
   ];
 
