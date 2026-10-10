@@ -558,9 +558,32 @@ export interface WorkerSnapshot {
   idleMs: number | null;        // null = PTY already gone
   tokensUsed: number;
   tokenCap: number | null;      // effective cap; null = unlimited (the default)
+  usd?: number;
+  objective?: string;
+  slackUrl?: string;
   hasSlack: boolean;
   releasing: boolean;
   status: 'releasing' | 'working';
+}
+export interface PendingSpawnSnapshot {
+  id: string;
+  file: string;
+  objective: string;
+  name: string;
+  waitingMs: number;
+}
+export interface TempHistoryRow {
+  id: string;
+  name: string;
+  objective: string;
+  startedAt: number;
+  endedAt: number;
+  tokens: number;
+  usd: number;
+  result: 'done' | 'failed' | 'stopped';
+  report: string;
+  failureReason: string;
+  slackUrl: string;
 }
 /** A worker worktree preserved at teardown, awaiting integration + GC. */
 export interface PreservedWorktreeSnapshot {
@@ -787,6 +810,20 @@ const api = {
   /** Manually stop a live ephemeral worker (safety-gated teardown; work preserved). */
   stopWorker: (workerId: string): Promise<{ ok: boolean; error?: string }> =>
     ipcRenderer.invoke('workers:stop', workerId),
+  /** Spawn-request files still sitting in the queue (temps switch may be off). */
+  listPendingTemps: (): Promise<{ pending: PendingSpawnSnapshot[]; spawnEnabled: boolean }> =>
+    ipcRenderer.invoke('workers:pending'),
+  /** Finished temps persisted in SQLite (survives restart). */
+  listTempHistory: (limit?: number): Promise<TempHistoryRow[]> =>
+    ipcRenderer.invoke('temps:history', limit ?? 200),
+  /** Live + pending + history in one shot for the Paper Temps screen. */
+  tempsSnapshot: (): Promise<{
+    live: WorkerSnapshot[];
+    pending: PendingSpawnSnapshot[];
+    history: TempHistoryRow[];
+    spawnEnabled: boolean;
+    maxWorkers: number;
+  }> => ipcRenderer.invoke('temps:snapshot'),
 
   // ─── Semantic memory (MemPalace CLI) ─────────────────────────────────────
   memoryStatus: (): Promise<MemoryStatus> => ipcRenderer.invoke('hive:memoryStatus'),
@@ -1298,7 +1335,7 @@ const api = {
     ipcRenderer.invoke('integrations:setSecret', req),
   integrationsRemove: (req: { id: string }): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke('integrations:remove', req),
-  integrationsTest: (req: { id: string; path?: string }): Promise<{ ok: boolean; status?: number; error?: string }> =>
+  integrationsTest: (req: { id: string; path?: string }): Promise<{ ok: boolean; status?: number; error?: string; ms?: number }> =>
     ipcRenderer.invoke('integrations:test', req),
   // Per-CLI-provider BYOK keys — WRITE-ONLY. `providerKeySet` stores a backend key one
   // way (never echoed); `providerKeyHas` returns only a boolean; no method ever returns

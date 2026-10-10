@@ -34,6 +34,7 @@ function screenCopy(route: PaperRoute, agentName?: string): { title: string; led
     memory: { title: 'Memory', lede: 'Cards, list and graph — MDF-18.' },
     capabilities: { title: 'Capabilities', lede: 'Marketplace and who-has-what — MDF-19.' },
     temps: { title: 'Temps', lede: 'History of short-lived workers — MDF-20.' },
+    connections: { title: 'Connections', lede: 'REST APIs agents call without seeing the key.' },
     stapler: { title: 'Stapler', lede: 'Floating ring and captures — MDF-25.' },
     notes: { title: 'Notes', lede: 'Private, searchable, on this machine.' },
     agent: { title: 'Agent', lede: '' },

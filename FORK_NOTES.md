@@ -100,3 +100,6 @@ A GitHub fork (MDF-5) is still waiting on the human. No remotes were added besid
 - Deprecated transitive deps (`glob`, `rimraf`, `multer@1`, `tar@6`, …) from the lockfile. Not fixed.
 - First-run onboarding is still on screen in the isolated window (expected). Completing it needs a **new** harness home so it never points at the live hive.
 - Source tree is 0.4.6; feature-gap work against 0.5.5 Pro must not assume this checkout already has those files.
+
+# MDF-20 Temps + Connections
+Work in progress on feat/mdf-20-temps.

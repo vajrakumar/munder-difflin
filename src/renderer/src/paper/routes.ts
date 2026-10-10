@@ -6,6 +6,7 @@ export type PaperRoute =
   | 'memory'
   | 'capabilities'
   | 'temps'
+  | 'connections'
   | 'stapler'
   | 'notes'
   | 'agent'
@@ -36,10 +37,12 @@ export function parseHash(hash: string): PaperLocation {
   if (head === 'agent' && rest) return { route: 'agent', agentId: rest };
   if (head === 'notes' && rest) return { route: 'notes', noteId: rest };
   if (head === 'tasks' && rest) return { route: 'tasks', taskId: decodeURIComponent(rest) };
+  if (head === 'settings' && rest === 'connections') return { route: 'connections' };
   const ids = new Set(NAV.map((n) => n.id));
   ids.add('home');
   ids.add('notes');
   ids.add('orchestrator');
+  ids.add('connections');
   if (head && ids.has(head as PaperRoute)) return { route: head as PaperRoute };
   return { route: 'home' };
 }
@@ -50,6 +53,7 @@ export function hrefFor(route: PaperRoute, id?: string): string {
   if (route === 'notes' && id) return `#/notes/${id}`;
   if (route === 'tasks' && id) return `#/tasks/${encodeURIComponent(id)}`;
   if (route === 'home') return '#/';
+  if (route === 'connections') return '#/settings/connections';
   return `#/${route}`;
 }
 
