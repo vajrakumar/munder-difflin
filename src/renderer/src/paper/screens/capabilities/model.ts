@@ -51,7 +51,6 @@ export interface GrantDiff {
 }
 
 export const STORAGE_KEY = 'paper.caps.v1';
-export const MATRIX_AGENT_TARGET = 30;
 
 export const TYPE_FILTERS: TypeFilter[] = ['all', 'skill', 'mcp'];
 export const RISK_FILTERS: RiskFilter[] = ['all', 'safe-readonly', 'write', 'secret'];
@@ -479,20 +478,9 @@ export function usedBy(
   return agents.filter((a) => hasGrant(grants, a.id, capId));
 }
 
+/** Live or gallery roster only. Never pad invented seats. */
 export function matrixAgents(agents: PaperAgent[]): PaperAgent[] {
-  const real = agents.filter((a) => !a.archived);
-  if (real.length >= MATRIX_AGENT_TARGET) return real.slice(0, MATRIX_AGENT_TARGET);
-  const extra: PaperAgent[] = [];
-  for (let i = real.length + 1; i <= MATRIX_AGENT_TARGET; i++) {
-    const n = String(i).padStart(2, '0');
-    extra.push({
-      id: `demo-agent-${n}`,
-      name: `Agent ${n}`,
-      role: 'Demo seat',
-      status: 'idle'
-    });
-  }
-  return [...real, ...extra];
+  return agents.filter((a) => !a.archived);
 }
 
 export function installSkill(store: CapsStore, cap: Capability): CapsStore {
