@@ -1,8 +1,10 @@
-# Munder Difflin fork: product plan (MDF-2)
+# Vajra's Office: product plan (MDF-2)
 
-Author: Dwight · 2026-10-10 · Status: proposal for god / the human
+Product name: **Vajra's Office**, a fork of Munder Difflin.
 
-**Goal.** Build a fork that has every feature in the paid **Pro** plan, adds more, and replaces the pixel-art look with a modern, polished interface. UI/UX quality comes first.
+Author: Dwight · 2026-10-10 · Status: approved; scope decisions from the human on MDF-35 applied
+
+**Goal.** Build a fork that has every feature in the paid **Pro** plan, adds more, and wraps it in a modern, polished interface. The pixel office stays as an optional view. UI/UX quality comes first.
 
 **Rule.** We rebuild Pro features from their public descriptions only: the website, blog posts, release notes and the labels shown in the installed app. We never copy closed-source code. The open-source base is MIT licensed. The office tilesets are LimeZu assets bought under a licence that requires attribution, so a new look must either drop them or keep that attribution (`LICENSE-ASSETS`).
 
@@ -89,11 +91,11 @@ Also shipped in 0.5.x and not clearly marked Pro (we build these regardless):
 | P14 Paste image | Partly: attachments exist | Paste handler | S |
 | Ticket keys, per-agent tasks, archive | Partly | Port to match 0.5.3/0.5.5 behaviour | S–M |
 | P15 Licensing | Not needed in our fork | Skip; we keep everything unlocked | — |
-| T1 Teams | Config only (`OrgSection`), no transport | Peer-to-peer or relay transport, seats, roster | XL (phase 4) |
+| T1 Teams | Config only (`OrgSection`), no transport | Peer-to-peer or relay transport, seats, roster | Deferred (out of scope) |
 
 ## 4. UI/UX direction
 
-**Principle:** a calm, dense, keyboard-first workspace in the class of Linear, Raycast and Arc. The office metaphor stays as an optional, polished view rather than the main chrome. Pixel art goes entirely: no Press Start 2P, no SNES borders, no hard 4px shadows.
+**Principle:** a calm, dense, keyboard-first workspace in the class of Linear, Raycast and Arc. The pixel office stays as an optional view inside the new shell, keeping its existing art. Everywhere else, the pixel styling goes: no Press Start 2P, no SNES borders, no hard 4px shadows in the app chrome.
 
 ### 4.1 Design system ("Paper" v1)
 - **Tokens:** one source, `design/tokens.ts`, which generates CSS variables. Colours are defined in OKLCH (a colour format where equal number steps look equally different). Each colour has a 12-step scale: neutral, accent, and success/warning/danger/info. Light, dark and high-contrast themes come from the same tokens. Spacing uses a 4px base; corner radius steps are 6, 8, 12 and 16; there are 3 elevation (shadow depth) levels; motion tokens set durations of 120, 200 and 320 ms with standard easing, and honour the system "reduce motion" setting.
@@ -119,7 +121,7 @@ Also shipped in 0.5.x and not clearly marked Pro (we build these regardless):
 - **Notifications centre** in place of scattered toasts; toasts are used only for an action you just took.
 
 ### 4.3 Key screens
-1. **Home / Floor.** The default screen. A live grid of agent tiles (avatar, status ring, current tool, last line, tokens and cost, "asked you" chip) with filters. An optional **Office view** shows the same data as a clean isometric vector floor (still Pixi, new art), for delight and demos.
+1. **Home / Floor.** The default screen. A live grid of agent tiles (avatar, status ring, current tool, last line, tokens and cost, "asked you" chip) with filters. An optional **Office view** shows the existing pixel office (Pixi), embedded in the new shell and fed by the same live data.
 2. **Agent room.** Terminal on the left (we keep xterm), with tabs for Overview (engine, model, budget, worktree), Messages, Tasks, Git diff and Traces (tool waterfall) on the right. Composer pinned at the bottom with attachments and image paste.
 3. **Orchestrator.** Same as an agent room, plus a routing log, the board, breaker controls and a fleet budget chart.
 4. **Inbox.** Three columns: filters (Needs you · Agents · Outside · Team), list, detail. Inline answer for questions on ASK ME cards. Keyboard triage with j/k, e and r.
@@ -171,14 +173,14 @@ Sizes: **S** is under a day, **M** is 1 to 3 days, **L** is 3 to 5 days.
 21. Meeting capture: system audio plus mic, labelled You and Them, local transcription, meeting library. (L, may split into 2)
 
 **Phase 3: Beyond Pro**
-22. Office view restyle: isometric vector art with the same live data. (L)
+22. Office view: embed the existing pixel office as an optional view in the new shell, with a toggle and the same live data. Keep the LimeZu attribution. (M)
 23. Replay timeline for an agent. (L)
 24. Cost and limit dashboard. (M)
 25. Approvals centre. (M)
 26. In-app diff review and merge. (L)
 27. Office templates gallery. (M)
 
-**Phase 4: Teams (optional, needs a human decision on transport and hosting)**
+**Phase 4: Teams (DEFERRED by the human, 2026-10-10; MDF-33 and MDF-34 parked)**
 28. Design spec for cross-machine orchestrator messaging (sealed, per device). (M)
 29. Seats, invite codes, roster and presence. (L)
 
@@ -187,7 +189,7 @@ Sizes: **S** is under a day, **M** is 1 to 3 days, **L** is 3 to 5 days.
 - i18n keys for every new string.
 - The packaging pipeline (MDF-4) ships each phase.
 
-**Open questions for the human:**
-1. Do we keep the office floor as an optional view (recommended) or drop it?
-2. Is Teams (Phase 4) in scope at all?
-3. Should the brand and name diverge from "Munder Difflin" for the fork?
+**Decisions (human, MDF-35, 2026-10-10):**
+1. Keep the pixel office as an optional view in the new UI.
+2. Teams is out of scope for now; Phase 4 (MDF-33, MDF-34) is deferred.
+3. The product name is **Vajra's Office**. Use it for the app name, window title and onboarding. Packaging (MDF-4) uses its own bundle ID next to the installed app.
