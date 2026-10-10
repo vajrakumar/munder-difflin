@@ -10,6 +10,10 @@
  *   - (opt-in, MD_TUNNEL_LIVE=1) a real request crosses the public tunnel and
  *     reaches each server's own handler. Off by default: unit runs never touch
  *     the network.
+ *
+ * Live run: MD_TUNNEL_LIVE=1 node --test --test-force-exit test/tunnel.test.cjs
+ * (tunnelmole has no close handle, so its socket keeps Node alive without
+ * --test-force-exit).
  */
 
 const test = require('node:test');
@@ -110,6 +114,6 @@ test('live: a Slack event POST crosses the tunnel and hits signature checking', 
     const started = await server.start();
     assert.equal(started.ok, true, started.error);
     const res = await postThroughTunnel(started.url, '{"type":"event_callback"}');
-    assert.equal(res.status, 401, 'our handler rejects the missing Slack signature');
+    assert.equal(res.status, 403, 'slack.ts answers 403 to a missing/invalid Slack signature');
   } finally { server.stop(); }
 });
