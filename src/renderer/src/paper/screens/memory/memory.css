@@ -57,7 +57,7 @@
 .pm-search .paper-input { padding-inline-start: 28px; width: 240px; }
 .pm-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .pm-chip-label {
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -107,7 +107,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
   min-width: 0;
 }
@@ -130,7 +130,7 @@
 
 .pm-table-wrap { overflow: auto; min-height: 0; }
 .pm-table { min-width: 640px; }
-.pm-table tbody tr { cursor: pointer; }
+.pm-table tbody tr[tabindex] { cursor: pointer; }
 .pm-table tbody tr[aria-current="true"] {
   background: var(--paper-accent-2, var(--paper-neutral-3));
 }
@@ -173,7 +173,7 @@
   background: color-mix(in oklch, var(--paper-surface) 88%, transparent);
   border: 1px solid var(--paper-border);
   border-radius: var(--paper-radius-md);
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text);
   pointer-events: none;
 }
@@ -198,10 +198,18 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
-.pm-node-label {
-  font-size: 11px;
-  fill: var(--paper-text);
+.pm-graph-plot {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
+  overflow: hidden;
+}
+.pm-node-label {
+  position: absolute;
+  font-size: var(--paper-text-xs);
+  color: var(--paper-text);
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .pm-docs { overflow: auto; min-height: 0; }
@@ -257,7 +265,7 @@
   padding-block-start: 4px;
   border-block-start: 1px solid var(--paper-border);
   color: var(--paper-text-muted);
-  font-size: 12px;
+  font-size: var(--paper-text-xs);
 }
 .pm-foot-keys {
   display: flex;

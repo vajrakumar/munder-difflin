@@ -14,7 +14,7 @@ import type { PaperRoute } from '../../routes';
 import { MemoryGraph } from './graph';
 import {
   DEBOUNCE_MS, DEMO_AGENT_IDS, PalaceUnavailable, SUGGESTIONS, filterHits, graphFromHits,
-  hitMentions, memorySource, type KnowledgeRow, type MemoryHit, type PalaceStatus,
+  hitMentions, memorySource, titleOf, type KnowledgeRow, type MemoryHit, type PalaceStatus,
   type SourceFilter, type View
 } from './model';
 import '../../common/common.css';
@@ -158,6 +158,7 @@ function ScreenInner(): JSX.Element {
       if (e.key === '1') { setTab('cards'); return; }
       if (e.key === '2') { setTab('list'); return; }
       if (e.key === '3') { setTab('graph'); return; }
+      if (e.key === '4') { setTab('knowledge'); return; }
       if (e.key === 'r') {
         e.preventDefault();
         reflectRef.current();
@@ -233,6 +234,7 @@ function ScreenInner(): JSX.Element {
   }
 
   const searching = query.trim().length > 0;
+  const narrowed = searching || !!topic || !!agent || source !== 'all';
   const palaceLabel = !status
     ? 'Checking palace…'
     : !status.available
@@ -351,7 +353,7 @@ function ScreenInner(): JSX.Element {
                       <TH>Source</TH>
                       <TH>Chunks</TH>
                       <TH>Added</TH>
-                      <TH />
+                      <TH><span className="pc-sr">Actions</span></TH>
                     </TR>
                   </THead>
                   <TBody>
@@ -362,7 +364,15 @@ function ScreenInner(): JSX.Element {
                         <TD>{d.chunkCount}</TD>
                         <TD>{relative(d.addedAt) || d.addedAt.slice(0, 10)}</TD>
                         <TD>
-                          <Button size="sm" variant="danger" onClick={() => void onRemove(d.id)}>Remove</Button>
+                          <Button
+                            size="sm"
+                            variant="danger"
+                            aria-label={`Remove ${d.title}`}
+                            title={`Remove ${d.title}`}
+                            onClick={() => void onRemove(d.id)}
+                          >
+                            Remove
+                          </Button>
                         </TD>
                       </TR>
                     ))}
@@ -385,14 +395,28 @@ function ScreenInner(): JSX.Element {
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Brain size={28} />}
-            title={searching ? 'No results' : 'No memories yet'}
-            description={searching ? 'Try one of these queries.' : building ? 'Memory is building. Recent notes will land here.' : 'Search by meaning, or wait for agents to write notes.'}
+            title={narrowed ? 'No results' : 'No memories yet'}
+            description={
+              searching
+                ? 'Try one of these queries.'
+                : topic
+                  ? 'No notes mention this topic.'
+                  : narrowed
+                    ? 'Nothing matches this filter.'
+                    : building
+                      ? 'Memory is building. Recent notes will land here.'
+                      : 'Search by meaning, or wait for agents to write notes.'
+            }
             action={searching ? (
               <div className="pm-suggest">
                 {SUGGESTIONS.map((s) => (
                   <Button key={s} size="sm" variant="secondary" onClick={() => setQuery(s)}>{s}</Button>
                 ))}
               </div>
+            ) : topic ? (
+              <Button size="sm" variant="secondary" onClick={() => setTopic(null)}>Clear topic</Button>
+            ) : narrowed ? (
+              <Button size="sm" variant="secondary" onClick={() => { setAgent(null); setSource('all'); }}>Clear filters</Button>
             ) : undefined}
           />
         ) : view === 'cards' ? (
@@ -433,8 +457,12 @@ function ScreenInner(): JSX.Element {
                 {filtered.map((hit) => (
                   <TR
                     key={hit.id}
+                    tabIndex={0}
                     aria-current={hit.id === selectedId}
                     onClick={() => { setSelectedId(hit.id); setOpen(hit); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(hit.id); setOpen(hit); }
+                    }}
                   >
                     <TD>
                       <span className="pm-owner">
@@ -476,7 +504,7 @@ function ScreenInner(): JSX.Element {
         <Button size="sm" variant="secondary" onClick={() => void onReflect()}>Reflect now</Button>
         <div className="pm-foot-keys">
           <Kbd>/</Kbd> search
-          <Kbd>1</Kbd><Kbd>2</Kbd><Kbd>3</Kbd> views
+          <Kbd>1</Kbd><Kbd>2</Kbd><Kbd>3</Kbd><Kbd>4</Kbd> views
           <Kbd>j</Kbd><Kbd>k</Kbd> move
           <Kbd>↵</Kbd> open
           <Kbd>r</Kbd> reflect
@@ -485,7 +513,7 @@ function ScreenInner(): JSX.Element {
 
       <Sheet open={!!open} onOpenChange={(v) => { if (!v) setOpen(null); }}>
         {open ? (
-          <SheetContent title={open.file}>
+          <SheetContent title={titleOf(open)}>
             <div className="pm-sheet-body">
               <div className="pm-sheet-meta">
                 <Avatar name={nameOf(agents, open.agentId)} size="sm" />
@@ -493,7 +521,7 @@ function ScreenInner(): JSX.Element {
                 <Badge tone={open.source === 'knowledge' ? 'accent' : 'neutral'}>{open.source}</Badge>
                 <span>{relative(open.writtenAt) || ''}</span>
               </div>
-              <div className="pm-sheet-text"><RichText text={(full || open.text).replace(/^#+\s*/gm, '')} /></div>
+              <div className="pm-sheet-text" dir="auto"><RichText text={(full || open.text).replace(/^#+\s*/gm, '')} /></div>
               <Button variant="secondary" onClick={() => void onOpenFile(open)}>Open file</Button>
             </div>
           </SheetContent>

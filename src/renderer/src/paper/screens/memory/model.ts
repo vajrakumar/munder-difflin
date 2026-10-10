@@ -75,6 +75,21 @@ export function snippetOf(text: string, max = 220): string {
   return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
 }
 
+/** Sheet / card heading: the note title, never the filename (B-18-10). */
+export function titleOf(hit: MemoryHit): string {
+  const heading = /^#{1,4}\s+(.+)$/m.exec(hit.text);
+  if (heading) {
+    const tail = heading[1].replace(/^\s*\d{4}-\d{2}-\d{2}\s*[—\-:·]*\s*/, '').trim();
+    if (tail) return tail;
+  }
+  const bold = /\*\*(.+?)\*\*/.exec(hit.text);
+  if (bold?.[1]) {
+    const t = bold[1].replace(/[`*_]/g, '').trim();
+    if (t) return t;
+  }
+  return hit.file;
+}
+
 /** Split a memory.md into `##` sections and dated log bullets: the units a
  *  person thinks of as "one memory". The seed header is dropped. */
 export function sectionsOf(md: string): string[] {
@@ -151,23 +166,28 @@ export function keywordScore(text: string, query: string): number {
 
 export const SUGGESTIONS = ['release checklist', 'electron upgrade', 'what did we decide about the sidebar', 'broker token', 'preview tips'];
 export const DEBOUNCE_MS = 250;
+export const RECENT_LIMIT = 18;
 export const CLUSTER_HUES = [210, 28, 152, 262, 42, 188, 330, 92, 0, 240];
 
 export function clusterHue(cluster: number): number {
   return CLUSTER_HUES[((cluster % CLUSTER_HUES.length) + CLUSTER_HUES.length) % CLUSTER_HUES.length];
 }
 
-/** Graph of the current result set so Cards, List and Graph always agree. */
+/** Graph of the current result set so Cards, List and Graph always agree.
+ *  Concatenate hit bodies as-is. Prefixing `## ${h.file}` made extractTopics
+ *  treat the filename as a topic (B-18-1 / MDF-51); hitMentions then looked
+ *  in the body and the first topic emptied the board. */
 export function graphFromHits(agents: PaperAgent[], hits: MemoryHit[]): GraphModel {
   const memories: Record<string, string> = {};
   const seen = new Set<string>();
   let knowledge = '';
   for (const h of hits) {
+    const chunk = h.text;
     if (h.agentId) {
       seen.add(h.agentId);
-      memories[h.agentId] = `${memories[h.agentId] ?? ''}\n## ${h.file}\n${h.text}`;
+      memories[h.agentId] = memories[h.agentId] ? `${memories[h.agentId]}\n${chunk}` : chunk;
     } else {
-      knowledge += `\n## ${h.file}\n${h.text}`;
+      knowledge = knowledge ? `${knowledge}\n${chunk}` : chunk;
     }
   }
   const present = agents.filter((a) => seen.has(a.id));
@@ -180,7 +200,8 @@ export function graphFromHits(agents: PaperAgent[], hits: MemoryHit[]): GraphMod
 }
 
 export function hitMentions(hit: MemoryHit, topic: string): boolean {
-  return hit.text.toLowerCase().includes(topic.toLowerCase());
+  const needle = topic.toLowerCase();
+  return hit.text.toLowerCase().includes(needle) || titleOf(hit).toLowerCase() === needle;
 }
 
 // ─── Graph model ───────────────────────────────────────────────────────────
@@ -276,7 +297,7 @@ function liveSource(c: Cth): MemorySource {
           id: `r:${id}:${i}`, source: 'memory', agentId: id, file: 'memory.md', path: memPath(id), text: s, snippet: snippetOf(s), writtenAt: dateIn(s)
         }));
       }
-      return rankHits(hits).slice(0, 18);
+      return rankHits(hits).slice(0, RECENT_LIMIT);
     },
     async memories(ids) {
       agentIds = ids;
@@ -348,7 +369,7 @@ function demoSource(): MemorySource {
         .filter((h) => (h.score ?? 0) >= 1);
       return wait(rankHits(scored));
     },
-    recent: () => wait(rankHits(memHits()).slice(0, 8)),
+    recent: () => wait(rankHits(memHits()).slice(0, RECENT_LIMIT)),
     memories: (ids) => wait(Object.fromEntries(ids.map((id) => [id, DEMO_MEMORY[id] ?? ''])), 60),
     docs: () => wait([...docs], 120),
     addFiles() {
