@@ -131,8 +131,10 @@ function AutomationsScreen(): JSX.Element {
     return opts;
   }, [floor.agents]);
 
+  const iso = (ms: number): string => new Date(ms).toISOString();
+
   return (
-    <div className="pa-root" dir={lang === 'ar' ? 'rtl' : undefined} lang={lang}>
+    <div className="pc-screen pa-root" dir={lang === 'ar' ? 'rtl' : undefined} lang={lang}>
       <header className="pa-head">
         <div>
           <h1 className="pa-title">{t.title}</h1>
@@ -164,8 +166,18 @@ function AutomationsScreen(): JSX.Element {
           <EmptyState title={t.error(state.error)} action={<Button onClick={api.reload}><RefreshCw size={14} /> {t.retry}</Button>} />
         ) : filter === 'history' ? (
           <History t={t} api={api} />
-        ) : userRows.length === 0 && filter !== 'all' ? (
-          <EmptyState title={t.emptyFiltered.title} description={t.emptyFiltered.body} />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            icon={userRows.length === 0 ? <Zap size={20} /> : undefined}
+            title={userRows.length === 0 ? t.empty.title : t.emptyFiltered.title}
+            description={userRows.length === 0 ? t.empty.body : t.emptyFiltered.body}
+            action={userRows.length === 0 ? (
+              <div className="pa-row-actions">
+                <Button onClick={startSchedule}>{t.newSchedule}</Button>
+                <Button variant="secondary" onClick={startWebhook}>{t.newWebhook}</Button>
+              </div>
+            ) : undefined}
+          />
         ) : (
           <>
             {userRows.length === 0 && (
@@ -205,16 +217,16 @@ function AutomationsScreen(): JSX.Element {
                             ? (r.url ? <code className="pa-url" title={r.url}>{r.url}</code> : <span className="pa-muted">{t.noUrl}</span>)
                             : <>
                               <span>{r.cadence}</span>
-                              {r.nextMs ? <span className="pa-muted" title={fullStamp(r.nextMs)}> · {fullStamp(r.nextMs)}</span> : null}
+                              {r.nextMs ? <span className="pa-muted" title={fullStamp(iso(r.nextMs))}> · {fullStamp(iso(r.nextMs))}</span> : null}
                             </>}
                         </TD>
                         <TD>
                           {r.last ? (
                             <span className="pa-last">
                               <Badge tone={badgeTone(r.last.decision)}>{t.status[r.last.decision ?? 'sent'] ?? r.last.decision}</Badge>
-                              <span className="pa-muted" title={fullStamp(r.last.at)}>{relative(r.last.at)}</span>
+                              <span className="pa-muted" title={fullStamp(iso(r.last.at))}>{relative(iso(r.last.at))}</span>
                             </span>
-                          ) : r.lastFiredAt ? <span className="pa-muted">{relative(r.lastFiredAt)}</span>
+                          ) : r.lastFiredAt ? <span className="pa-muted">{relative(iso(r.lastFiredAt))}</span>
                             : <span className="pa-muted">{r.kind === 'context' ? '—' : t.never}</span>}
                         </TD>
                         <TD><Switch on={r.enabled} label={t.toggle(r.name)} onToggle={() => toggleRow(r)} /></TD>
@@ -238,13 +250,13 @@ function AutomationsScreen(): JSX.Element {
 
       <Sheet open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
         {editing?.kind === 'schedule' && (
-          <SheetContent title={t.editSchedule}>
+          <SheetContent title={t.editSchedule} className="pa-sheet">
             <ScheduleEditor t={t} api={api} draft={editing.draft} agents={agentOptions} now={now}
               onDone={() => setEditing(null)} />
           </SheetContent>
         )}
         {editing?.kind === 'webhook' && (
-          <SheetContent title={t.editWebhook}>
+          <SheetContent title={t.editWebhook} className="pa-sheet">
             <WebhookEditor t={t} api={api} draft={editing.draft} url={state.urls[editing.draft.id] ?? ''}
               onDone={() => setEditing(null)} />
           </SheetContent>
@@ -367,7 +379,7 @@ function ScheduleEditor({ t, api, draft: initial, agents, now, onDone }: {
 
       <div className="pa-preview" aria-live="polite">
         <strong>{t.nextRuns}</strong>
-        {runs.length ? <ol>{runs.map((r) => <li key={r}>{fullStamp(r)}</li>)}</ol> : <p className="pa-hint">{t.noNextRuns}</p>}
+        {runs.length ? <ol>{runs.map((r) => <li key={r}>{fullStamp(new Date(r).toISOString())}</li>)}</ol> : <p className="pa-hint">{t.noNextRuns}</p>}
       </div>
 
       <GuardsFields t={t} value={d.guards} onChange={(g) => setD({ ...d, guards: g })} />
@@ -519,7 +531,7 @@ function History({ t, api }: { t: Copy; api: AutomationsApi }): JSX.Element {
         <TBody>
           {rows.map((e) => (
             <TR key={e.id}>
-              <TD><span title={fullStamp(e.at)}>{relative(e.at)}</span></TD>
+              <TD><span title={fullStamp(new Date(e.at).toISOString())}>{relative(new Date(e.at).toISOString())}</span></TD>
               <TD><span className="pa-name">{e.sourceName}</span> <span className="pa-muted">· {typeOf(e)}{e.direction === 'outbound' ? ' ↑' : ''}</span></TD>
               <TD className="pa-what" title={e.body}>{e.title && e.title !== e.decision ? <strong>{e.title} </strong> : null}{e.body}</TD>
               <TD>
