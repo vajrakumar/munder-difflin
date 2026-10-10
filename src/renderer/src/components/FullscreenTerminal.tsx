@@ -22,6 +22,7 @@ import { useHasTerminalDraft, disposeTerminal, reflowTerminal, notifyThemeChange
 import { useAppTheme, toggleAppTheme } from '@/design/theme';
 import type { HarnessConfig } from '@/store/config';
 import { useRtl } from '@/i18n/useDirection';
+import { setClassicUi } from '@/paper/classicFlag';
 
 /** Roster rail width. A fixed 232px is right on a 14" laptop but reads as a
  *  sliver on a 27" display, where names truncate for no reason — so it tracks
@@ -312,6 +313,25 @@ export function FullscreenTerminal({ config }: FullscreenTerminalProps) {
         {/* Same top-right controls as the main title bar — fullscreen covers
             it, so theme / exit-fullscreen / IDE must live here too. */}
         <div className="cth-titlebar-nodrag" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            onClick={() => setClassicUi(false)}
+            title="Paper UI"
+            aria-label="Paper UI"
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              height: 28, padding: '0 8px',
+              background: 'var(--cth-paper-100)',
+              boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+              border: 'none', borderRadius: 2, cursor: 'pointer',
+              color: 'var(--cth-ink-900)',
+              fontFamily: 'var(--cth-font-ui)',
+              fontSize: 12,
+              lineHeight: 1
+            }}
+          >
+            Paper UI
+          </button>
           <button
             onClick={toggleRoster}
             title={rosterCollapsed ? t('fullscreenTerminal.showAgentList') : t('fullscreenTerminal.hideAgentList')}

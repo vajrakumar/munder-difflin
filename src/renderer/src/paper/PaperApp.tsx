@@ -180,6 +180,13 @@ function PaperShell(): JSX.Element {
       group: 'View',
       keywords: 'compact rail hide nav',
       run: () => rail.setAgentsOnly(!rail.agentsOnly)
+    },
+    {
+      id: 'view.classic',
+      label: 'Classic UI',
+      group: 'View',
+      keywords: 'pixel office command center',
+      run: () => setClassicUi(true)
     }
   ];
 

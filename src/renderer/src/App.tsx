@@ -32,6 +32,7 @@ import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
 import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
 import brandLogo from '@brand/logo.png?url';
+import { setClassicUi, SKIP_HIVE_PICKER_KEY } from '@/paper/classicFlag';
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
@@ -62,16 +63,25 @@ export function App() {
   // Whether the user has passed the launch-time hive picker this session. Starts
   // true (skip the picker) right after a hive SWITCH — changeHome relaunches and
   // leaves a one-shot localStorage flag so we don't bounce back onto the picker for
-  // the hive we just chose. Also set true on onboarding completion (below).
+  // the hive we just chose. Paper→Classic sets the same flag (the hive is already
+  // open). Also set true on onboarding completion (below).
   const [hiveOpened, setHiveOpened] = useState<boolean>(() => {
     try {
-      if (window.localStorage.getItem('cth.skipHivePickerOnce')) {
-        window.localStorage.removeItem('cth.skipHivePickerOnce');
-        return true;
-      }
+      return window.localStorage.getItem(SKIP_HIVE_PICKER_KEY) === '1';
     } catch { /* localStorage unavailable — show the picker */ }
     return false;
   });
+  // Clear the one-shot after a committed mount. Removing it in the useState
+  // initializer is impure: React 18 StrictMode (electron-vite) double-invokes
+  // that function, so the second call would miss the flag and dump HivePicker
+  // (B-pkg-1). The timeout is cancelled on StrictMode's extra unmount.
+  useEffect(() => {
+    if (!hiveOpened) return;
+    const id = window.setTimeout(() => {
+      try { window.localStorage.removeItem(SKIP_HIVE_PICKER_KEY); } catch { /* noop */ }
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [hiveOpened]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   /** Which tab Settings opens on. Set by a `cth:open-settings` deep link, reset
    *  to undefined (→ General) whenever the modal is opened the normal way. */
@@ -314,6 +324,27 @@ export function App() {
             terminal header — and the theme darkens the whole app, terminals
             included (design/theme.ts + tokens.css dark block). */}
         <button
+          type="button"
+          className="cth-titlebar-nodrag cth-tip"
+          onClick={() => setClassicUi(false)}
+          data-tip="Paper UI"
+          aria-label="Paper UI"
+          style={{
+            marginLeft: 'auto',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            height: 28, padding: '0 8px',
+            background: 'var(--cth-paper-100)',
+            boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)',
+            border: 'none', borderRadius: 2, cursor: 'pointer',
+            color: 'var(--cth-ink-900)',
+            fontFamily: 'var(--cth-font-ui)',
+            fontSize: 12,
+            lineHeight: 1
+          }}
+        >
+          Paper UI
+        </button>
+        <button
           className="cth-titlebar-nodrag cth-tip"
           onClick={() => {
             const next = toggleAppTheme();
@@ -333,7 +364,6 @@ export function App() {
           data-tip={appThemeNow === 'dark' ? 'Light theme' : 'Dark theme'}
           aria-label="Toggle dark mode"
           style={{
-            marginLeft: 'auto',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28, padding: 0,
             background: 'var(--cth-paper-100)',

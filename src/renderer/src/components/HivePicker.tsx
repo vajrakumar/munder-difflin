@@ -3,6 +3,7 @@ import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
 import type { HarnessConfig } from '@/store/config';
+import { SKIP_HIVE_PICKER_KEY } from '@/paper/classicFlag';
 
 export interface HivePickerProps {
   config: HarnessConfig;
@@ -12,8 +13,7 @@ export interface HivePickerProps {
 
 // Set right before a hive SWITCH so App skips this picker once after the relaunch
 // changeHome triggers — otherwise the user would land back on the picker for the
-// hive they just chose. App.tsx reads + clears it on mount.
-const SKIP_KEY = 'cth.skipHivePickerOnce';
+// hive they just chose. App.tsx reads + clears it on mount. Same key as Paper→Classic.
 
 function folderName(path: string): string {
   return path.split('/').filter(Boolean).pop() ?? path;
@@ -41,16 +41,16 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
     setError(undefined);
     setBusy(path);
     try {
-      window.localStorage.setItem(SKIP_KEY, '1');
+      window.localStorage.setItem(SKIP_HIVE_PICKER_KEY, '1');
       const res = await window.cth.changeHome(path, 'fresh');
       // Success never returns (the process relaunches). A return means an error.
       if (!res.ok) {
-        window.localStorage.removeItem(SKIP_KEY);
+        window.localStorage.removeItem(SKIP_HIVE_PICKER_KEY);
         setError(res.error ?? 'Could not open that folder.');
         setBusy(undefined);
       }
     } catch (e) {
-      window.localStorage.removeItem(SKIP_KEY);
+      window.localStorage.removeItem(SKIP_HIVE_PICKER_KEY);
       setError(e instanceof Error ? e.message : String(e));
       setBusy(undefined);
     }
