@@ -1,9 +1,15 @@
-# Fork identity (MDF-4). appId, productName, the URL scheme and artifact names
-# all differ from upstream so this build installs BESIDE
-# /Applications/Munder Difflin.app. Runtime half: src/shared/forkIdentity.ts.
-# productName is a placeholder until the rebrand question (MDF-35) is answered.
-appId: in.munderdiffl.app.fork
-productName: Munder Difflin Fork
+# Fork identity (MDF-4), rebranded "Vajra's Office" (MDF-35). appId, file
+# names, the URL scheme and artifact names all differ from upstream so this
+# build installs BESIDE /Applications/Munder Difflin.app. Runtime half:
+# src/shared/forkIdentity.ts.
+#
+# productName drives FILE names (the .app bundle, its executable, artifacts),
+# so it is the apostrophe-free "Vajras Office". The name people see, "Vajra's
+# Office", is CFBundleDisplayName/CFBundleName below and extraMetadata.productName
+# (Electron's app.name: menus, About box). Do not set executableName: on macOS
+# it also renames the .app bundle.
+appId: com.vajras-office.app
+productName: Vajras Office
 copyright: Copyright © 2026 Chaitanya Giri
 
 # Where electron-updater looks for new versions (latest*.yml + assets on GitHub
@@ -18,7 +24,8 @@ publish: null
 # Packaged package.json name = Electron's default app name. Upstream's is
 # `munder-difflin`; forkIdentity.ts pins userData too, this is belt and braces.
 extraMetadata:
-  name: munder-difflin-fork
+  name: vajras-office
+  productName: "Vajra's Office"
 
 # Bake the update toast's "What's new" list straight into latest*.yml.
 #
@@ -47,9 +54,9 @@ afterSign: build/notarize.cjs
 # Register the munderdifflin:// URL scheme (shareable-hires deep link) in the
 # packaged app: CFBundleURLTypes on macOS, registry entries via NSIS on Windows.
 protocols:
-  - name: Munder Difflin Fork
+  - name: "Vajra's Office"
     schemes:
-      - munderdifflin-fork
+      - vajras-office
 
 # electron-vite emits the app into out/; package exactly that plus what the
 # runtime needs. node-pty is native, so keep it out of the asar.
@@ -101,15 +108,17 @@ mac:
   # the privacy prompt and, for a signed app, remembers the grant — so the user
   # is asked ONCE instead of on every agent action.
   extendInfo:
-    NSDocumentsFolderUsageDescription: "Munder Difflin runs your Claude Code agents, which read and write files in the project folders you point them at."
-    NSDesktopFolderUsageDescription: "Munder Difflin's agents may work on projects located on your Desktop."
-    NSDownloadsFolderUsageDescription: "Munder Difflin's agents may work on projects located in your Downloads."
-    NSRemovableVolumesUsageDescription: "Munder Difflin's agents may work on projects located on external volumes."
-    NSNetworkVolumesUsageDescription: "Munder Difflin's agents may work on projects located on network volumes."
+    CFBundleDisplayName: "Vajra's Office"
+    CFBundleName: "Vajra's Office"
+    NSDocumentsFolderUsageDescription: "Vajra's Office runs your Claude Code agents, which read and write files in the project folders you point them at."
+    NSDesktopFolderUsageDescription: "Vajra's Office's agents may work on projects located on your Desktop."
+    NSDownloadsFolderUsageDescription: "Vajra's Office's agents may work on projects located in your Downloads."
+    NSRemovableVolumesUsageDescription: "Vajra's Office's agents may work on projects located on external volumes."
+    NSNetworkVolumesUsageDescription: "Vajra's Office's agents may work on projects located on network volumes."
     # The microphone is used by two opt-in, off-by-default voice features: Free
     # Flow dictation (Groq transcription) and Realtime Michael (live voice chat
     # with the orchestrator via OpenAI). Mic access only happens while one is on.
-    NSMicrophoneUsageDescription: "Munder Difflin uses your microphone only for its opt-in voice features: Free Flow dictation (transcribed by Groq into the message queue) and talking to Michael in real time (streamed to OpenAI). The mic is off unless you turn one of these on."
+    NSMicrophoneUsageDescription: "Vajra's Office uses your microphone only for its opt-in voice features: Free Flow dictation (transcribed by Groq into the message queue) and talking to Michael in real time (streamed to OpenAI). The mic is off unless you turn one of these on."
   # Hardened runtime + entitlements so the spawned `claude` agents inherit this
   # app's TCC responsibility (one grant covers them all) and node-pty can load.
   hardenedRuntime: true
@@ -139,10 +148,10 @@ mac:
       arch: [universal]
     - target: zip
       arch: [universal]
-  artifactName: Munder-Difflin-Fork-${version}-mac-${arch}.${ext}
+  artifactName: Vajras-Office-${version}-mac-${arch}.${ext}
 
 dmg:
-  title: Munder Difflin Fork ${version}
+  title: "Vajra's Office ${version}"
 
 # ---- Windows ----
 win:
@@ -157,11 +166,11 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  artifactName: Munder-Difflin-Fork-${version}-win-x64-setup.exe
-  shortcutName: Munder Difflin Fork
+  artifactName: Vajras-Office-${version}-win-x64-setup.exe
+  shortcutName: "Vajra's Office"
 
 portable:
-  artifactName: Munder-Difflin-Fork-${version}-win-x64-portable.exe
+  artifactName: Vajras-Office-${version}-win-x64-portable.exe
 
 # ---- Linux ----
 linux:
@@ -170,4 +179,4 @@ linux:
   target:
     - target: AppImage
       arch: [x64]
-  artifactName: Munder-Difflin-Fork-${version}-linux-x86_64.AppImage
+  artifactName: Vajras-Office-${version}-linux-x86_64.AppImage

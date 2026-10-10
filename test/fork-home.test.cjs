@@ -19,7 +19,7 @@ const loadTs = require('./load-ts.cjs');
 
 // Fake appData holding both apps' userData folders, owned by this test.
 const appData = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'md-fork-home-')));
-const userData = path.join(appData, 'munder-difflin-fork');
+const userData = path.join(appData, 'vajras-office');
 const upstream = path.join(appData, 'munder-difflin');
 fs.mkdirSync(userData, { recursive: true });
 
@@ -120,7 +120,7 @@ test('(b) no upstream install: nothing extra is refused', () => {
 });
 
 test('(c) Grok hooks are written to the fork file, never munder-hive.json', async (t) => {
-  assert.equal(GROK_HOOK_FILE_NAME, 'munder-hive-fork.json');
+  assert.equal(GROK_HOOK_FILE_NAME, 'vajras-office-hive.json');
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'md-fork-grok-'));
   const home = path.join(base, 'user');
   const harness = path.join(base, 'harness');
