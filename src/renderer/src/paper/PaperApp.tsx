@@ -3,11 +3,14 @@ import { Mic, Moon, PanelRight, Sun, SunMoon, User } from 'lucide-react';
 import {
   Avatar, Badge, EmptyState, IconButton, Kbd,
   Menu, MenuContent, MenuItem, MenuRadioGroup, MenuRadioItem, MenuSeparator, MenuTrigger,
-  Sheet, SheetContent, StatusRing, Tooltip, TooltipProvider
+  Sheet, SheetContent, StatusRing, ToastProvider, Tooltip, TooltipProvider
 } from '@/ui';
 import { APP_DISPLAY_NAME } from '@shared/forkIdentity';
+import { AgentLifecycleProvider, useAgentLifecycle } from './AgentLifecycle';
 import { setClassicUi } from './classicFlag';
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
+import { focusedViewFromRoute, markAttached, markDetached } from './detach';
+import { toggleDetach } from './Detachable';
 import { NotesPane } from './NotesPane';
 import { hrefFor, isGodRoom, parseHash, type PaperRoute } from './routes';
 import { SCREENS } from './screens';
@@ -38,7 +41,8 @@ function screenCopy(route: PaperRoute, agentName?: string): { title: string; led
     stapler: { title: 'Stapler', lede: 'Floating ring and captures — MDF-25.' },
     notes: { title: 'Notes', lede: 'Private, searchable, on this machine.' },
     agent: { title: 'Agent', lede: '' },
-    orchestrator: { title: agentName ?? 'Michael', lede: 'Routing, the board, breaker and fleet spend, on the agent room.' }
+    orchestrator: { title: agentName ?? 'Michael', lede: 'Routing, the board, breaker and fleet spend, on the agent room.' },
+    archived: { title: 'Archived agents', lede: 'Reopen or delete permanently. Memory and inbox stay until you delete.' }
   };
   return map[route];
 }
@@ -59,9 +63,35 @@ function readInspectorMap(): Record<string, boolean> {
 export function PaperApp(): JSX.Element {
   return (
     <ProSidebarProvider>
-      <PaperShell />
+      <ToastProvider>
+        <AgentLifecycleProvider>
+          <PaperShell />
+        </AgentLifecycleProvider>
+      </ToastProvider>
     </ProSidebarProvider>
   );
+}
+
+function DetachBridge(): null {
+  useEffect(() => {
+    const on = (e: MessageEvent): void => {
+      const data = e.data as { type?: string; key?: string } | null;
+      if (!data?.key) return;
+      if (data.type === 'hello') markDetached(data.key);
+      if (data.type === 'closed' || data.type === 'bring') markAttached(data.key);
+    };
+    window.addEventListener('message', on);
+    let ch: BroadcastChannel | null = null;
+    try {
+      ch = new BroadcastChannel('paper-detach');
+      ch.onmessage = (ev) => on({ data: ev.data } as MessageEvent);
+    } catch { /* noop */ }
+    return () => {
+      window.removeEventListener('message', on);
+      try { ch?.close(); } catch { /* noop */ }
+    };
+  }, []);
+  return null;
 }
 
 function PaperShell(): JSX.Element {
@@ -78,6 +108,7 @@ function PaperShell(): JSX.Element {
   const drag = useRef(false);
   const rail = useProSidebar();
   const needsYou = useInboxNeedsYou();
+  const life = useAgentLifecycle();
   useCommandPaletteHotkey(() => setPalette((v) => !v));
 
   const theme = resolvedTheme(themePref, systemDark);
@@ -104,6 +135,24 @@ function PaperShell(): JSX.Element {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      const n = e.target as HTMLElement | null;
+      if (n && (n.tagName === 'INPUT' || n.tagName === 'TEXTAREA' || n.tagName === 'SELECT' || n.isContentEditable)) return;
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        toggleDetach(focusedViewFromRoute(loc.route, loc.agentId));
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Backspace' && loc.agentId) {
+        e.preventDefault();
+        life.requestArchive(loc.agentId);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [loc.route, loc.agentId, life]);
 
   const onHandle = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     drag.current = true;
@@ -180,6 +229,22 @@ function PaperShell(): JSX.Element {
       group: 'View',
       keywords: 'compact rail hide nav',
       run: () => rail.setAgentsOnly(!rail.agentsOnly)
+    },
+    {
+      id: 'agent.archiveSelected',
+      label: loc.agentId ? `Archive ${agent?.name ?? loc.agentId}` : 'Archive selected agent',
+      group: 'Agents',
+      keywords: 'hide stop retain',
+      shortcut: '⌘⌫',
+      run: () => { if (loc.agentId) life.requestArchive(loc.agentId); }
+    },
+    {
+      id: 'view.detach',
+      label: 'Detach focused view',
+      group: 'View',
+      keywords: 'window monitor ide terminal office',
+      shortcut: '⌘⇧D',
+      run: () => { toggleDetach(focusedViewFromRoute(loc.route, loc.agentId)); }
     }
   ];
 
@@ -214,6 +279,7 @@ function PaperShell(): JSX.Element {
 
   return (
     <TooltipProvider>
+      <DetachBridge />
       <div className="paper-shell" data-narrow={narrow ? 'true' : undefined}>
         <a className="paper-skip" href="#paper-main">Skip to content</a>
         <header className="paper-titlebar">

@@ -144,5 +144,5 @@ export function subscribeDetach(l: Listener): () => void {
 export function focusedViewFromRoute(route: string, agentId?: string): DetachTarget {
   if (route === 'home') return { view: 'office' };
   if (route === 'agent' || route === 'orchestrator') return { view: 'terminal', agentId: agentId ?? 'god' };
-  return { view: 'ide', agentId };
+  return agentId ? { view: 'ide', agentId } : { view: 'ide' };
 }

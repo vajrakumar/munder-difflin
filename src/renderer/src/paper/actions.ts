@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, StickyNote,
+  Archive, Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, StickyNote,
   Timer, UserPlus, Users, Waypoints
 } from 'lucide-react';
 import { filterActions as rankActions, highlightMatch } from './actionSearch';
@@ -169,6 +169,15 @@ export function defaultActions(opts?: {
       group: 'Connections',
       keywords: 'probe ping t',
       run: () => go('connections')
+    },
+    {
+      id: 'nav.archived',
+      label: 'Go to Archived agents',
+      group: 'Navigate',
+      keywords: 'archive reopen closed hidden',
+      shortcut: 'G R',
+      icon: Archive,
+      run: () => go('archived')
     }
   ];
 }

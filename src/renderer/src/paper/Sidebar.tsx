@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import {
+  Archive,
   ChevronDown,
   ChevronRight,
   CircleDot,
@@ -21,7 +22,10 @@ import {
   StatusRing, Tooltip
 } from '@/ui';
 import type { PaperAgent, PaperNote, PaperProject } from './demoData';
+import { AgentOverflowMenu } from './AgentLifecycle';
+import { useFloor } from './data/hive';
 import { NAV, hrefFor, type PaperRoute } from './routes';
+import { copyFor, currentLang } from './screens/archived/copy';
 
 const ICONS: Record<string, typeof Home> = {
   home: Home,
@@ -153,7 +157,10 @@ function AgentRow({
   }
   if (dragging) return row;
   return (
-    <HoverCard content={<AgentCard agent={agent} />}>{row}</HoverCard>
+    <div className="paper-agent-wrap">
+      <HoverCard content={<AgentCard agent={agent} />}>{row}</HoverCard>
+      <AgentOverflowMenu agent={{ id: agent.id, name: agent.name, isGod: agent.id === 'god' }} />
+    </div>
   );
 }
 
@@ -188,6 +195,11 @@ export function Sidebar({
   activeNoteId?: string;
   inboxCount?: number;
 }): JSX.Element {
+  const floor = useFloor();
+  const archiveCopy = copyFor(currentLang());
+  const archivedIds = new Set(floor.agents.filter((a) => a.archived).map((a) => a.id));
+  const archivedCount = floor.agents.filter((a) => a.archived).length;
+  const liveGrouped = grouped.map((g) => ({ ...g, items: g.items.filter((a) => !archivedIds.has(a.id)) }));
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [notesH, setNotesH] = useState(() => {
     try { return Number(localStorage.getItem('paper.notesHeight')) || 168; } catch { return 168; }
@@ -225,7 +237,7 @@ export function Sidebar({
     if (!q) return true;
     return `${n.title} ${n.body}`.toLowerCase().includes(q);
   });
-  const flat = grouped.flatMap((g) => g.items);
+  const flat = liveGrouped.flatMap((g) => g.items);
 
   function nudge(id: string, dir: -1 | 1): void {
     const i = flat.findIndex((a) => a.id === id);
@@ -306,7 +318,7 @@ export function Sidebar({
 
       <div className="paper-sidebar-agents">
         <div className="paper-nav-label">{collapsed ? '·' : 'Agents'}</div>
-        {grouped.map((g) => {
+        {liveGrouped.map((g) => {
           const shut = collapsedProjects.includes(g.project.id);
           return (
             <section
@@ -432,6 +444,16 @@ export function Sidebar({
           </>
         )}
       </div>
+
+      <a
+        className="paper-nav paper-sidebar-archive"
+        href={hrefFor('archived')}
+        aria-current={loc.route === 'archived' ? 'page' : undefined}
+        aria-label={archiveCopy.footer(archivedCount)}
+      >
+        <Archive size={16} />
+        {collapsed ? null : archiveCopy.footer(archivedCount)}
+      </a>
     </aside>
   );
 }

@@ -2,7 +2,10 @@
 import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { Avatar, Badge, Button, EmptyState, Input, StatusRing } from '@/ui';
+import { useFloor } from '../../data/hive';
+import { DetachButton, Detachable } from '../../Detachable';
 import { hrefFor } from '../../routes';
+import { copyFor, currentLang } from '../archived/copy';
 import { DEFAULT_PROJECTS, type PaperAgent } from '../../demoData';
 import { floorStatusLine, isLiveAgent } from '../../statusLine';
 import { useProSidebar } from '../../sidebarState';
@@ -40,7 +43,11 @@ function Tile({ agent, project }: { agent: PaperAgent; project?: string }): JSX.
 }
 
 export function Screen(): JSX.Element {
-  const { agents, projects } = useProSidebar();
+  const { agents: allAgents, projects } = useProSidebar();
+  const floor = useFloor();
+  const archived = new Set(floor.agents.filter((a) => a.archived).map((a) => a.id));
+  const agents = allAgents.filter((a) => !archived.has(a.id));
+  const t = copyFor(currentLang());
   const [filter, setFilter] = useState<Filter>('all');
   const [projectId, setProjectId] = useState('all');
   const [q, setQ] = useState('');
@@ -62,6 +69,7 @@ export function Screen(): JSX.Element {
   const asked = agents.filter((a) => a.askedYou).length;
 
   return (
+    <Detachable target={{ view: 'office' }}>
     <div className="pc-screen ph-home">
       <header className="ph-bar">
         <div>
@@ -70,6 +78,7 @@ export function Screen(): JSX.Element {
             {floorStatusLine(agents)}
           </p>
         </div>
+        <DetachButton target={{ view: 'office' }} label={t.detachOffice} />
         <div className="ph-filters">
           <div className="ph-chips" role="group" aria-label="Status filter">
             {([
@@ -124,5 +133,6 @@ export function Screen(): JSX.Element {
         </div>
       )}
     </div>
+    </Detachable>
   );
 }

@@ -45,7 +45,18 @@ const en = {
   deleted: (name: string) => `${name} deleted.`,
   godLocked: 'Michael cannot be stopped or archived.',
   footer: (n: number) => (n === 1 ? '1 archived' : `${n} archived`),
-  keys: { move: 'move', open: 'open', search: 'search' }
+  keys: { move: 'move', open: 'open', search: 'search' },
+  detach: 'Detach',
+  placeholder: 'Shown in another window — Bring back',
+  bring: 'Bring back',
+  detachIde: 'Detach IDE',
+  detachTerm: 'Detach terminal',
+  detachOffice: 'Detach office',
+  sameSession: 'Same session · no second pty',
+  files: 'Files',
+  office: 'Office',
+  ide: 'IDE',
+  terminal: 'Terminal'
 };
 
 export type Copy = typeof en;
@@ -90,7 +101,18 @@ const zh: Copy = {
   deleted: (name) => `已删除 ${name}。`,
   godLocked: '无法停止或归档 Michael。',
   footer: (n) => (n === 1 ? '1 个已归档' : `${n} 个已归档`),
-  keys: { move: '移动', open: '打开', search: '搜索' }
+  keys: { move: '移动', open: '打开', search: '搜索' },
+  detach: '分离',
+  placeholder: '已在另一个窗口显示 — 收回',
+  bring: '收回',
+  detachIde: '分离 IDE',
+  detachTerm: '分离终端',
+  detachOffice: '分离办公室',
+  sameSession: '同一会话 · 不会再开一个 pty',
+  files: '文件',
+  office: '办公室',
+  ide: 'IDE',
+  terminal: '终端'
 };
 
 const ar: Copy = {
@@ -132,7 +154,18 @@ const ar: Copy = {
   deleted: (name) => `حُذف ${name}.`,
   godLocked: 'لا يمكن إيقاف مايكل أو أرشفته.',
   footer: (n) => (n === 1 ? 'مؤرشف واحد' : `${n} مؤرشفين`),
-  keys: { move: 'تنقّل', open: 'فتح', search: 'بحث' }
+  keys: { move: 'تنقّل', open: 'فتح', search: 'بحث' },
+  detach: 'فصل',
+  placeholder: 'يظهر في نافذة أخرى — أعده',
+  bring: 'أعده',
+  detachIde: 'فصل IDE',
+  detachTerm: 'فصل الطرفية',
+  detachOffice: 'فصل المكتب',
+  sameSession: 'نفس الجلسة · بلا pty ثانٍ',
+  files: 'ملفات',
+  office: 'المكتب',
+  ide: 'IDE',
+  terminal: 'الطرفية'
 };
 
 const TABLES: Record<string, Copy> = { en, zh, ar };
