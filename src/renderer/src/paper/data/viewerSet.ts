@@ -1,6 +1,11 @@
 /** A per-viewer set of ids (read, done) kept in localStorage. A convenience
- *  only: storage can be missing or throw, and the screens work without it. */
-import { useCallback, useState } from 'react';
+ *  only: storage can be missing or throw, and the screens work without it.
+ *  One store per key, so every component reading a key (the inbox screen and
+ *  the sidebar badge) sees the same set. */
+import { useCallback, useSyncExternalStore } from 'react';
+
+interface Store { set: Set<string>; listeners: Set<() => void> }
+const stores = new Map<string, Store>();
 
 function load(key: string): Set<string> {
   try {
@@ -12,15 +17,28 @@ function load(key: string): Set<string> {
   }
 }
 
+function storeFor(key: string): Store {
+  let s = stores.get(key);
+  if (!s) {
+    s = { set: load(key), listeners: new Set() };
+    stores.set(key, s);
+  }
+  return s;
+}
+
 export function useViewerSet(key: string): [Set<string>, (ids: string[], on: boolean) => void] {
-  const [set, setSet] = useState(() => load(key));
+  const store = storeFor(key);
+  const subscribe = useCallback((l: () => void) => {
+    store.listeners.add(l);
+    return () => { store.listeners.delete(l); };
+  }, [store]);
+  const set = useSyncExternalStore(subscribe, () => store.set);
   const update = useCallback((ids: string[], on: boolean) => {
-    setSet((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
-      try { localStorage.setItem(key, JSON.stringify([...next].slice(-2000))); } catch { /* noop */ }
-      return next;
-    });
-  }, [key]);
+    const next = new Set(store.set);
+    ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+    store.set = next;
+    try { localStorage.setItem(key, JSON.stringify([...next].slice(-2000))); } catch { /* noop */ }
+    store.listeners.forEach((l) => l());
+  }, [key, store]);
   return [set, update];
 }
