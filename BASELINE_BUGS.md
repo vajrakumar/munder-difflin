@@ -450,3 +450,91 @@ Quit: Cmd+Q → QUITTING NOW? / 2 agents → kill all & quit; process gone; no l
 - P0: 0
 - P1: 0
 - P2: 0 (clipboard). Cold launch still opens the hive picker (already B-pkg-1). Window title is **Vajra's Office** on this HEAD (B-pkg-2 was on the 8b829b58 asar).
+
+---
+
+## MDF-16 Tasks (paper.html#/tasks)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-756804.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** (contains `29f2b866 merge MDF-16 tasks screen into fork/main`) at `http://127.0.0.1:5181/paper.html#/tasks`. Developer gallery on :5179 is the `munder-difflin-ui` worktree and does **not** contain 29f2b866 — left running. HEAD of the clone at QA time: `cd250db1` (ancestor of 29f2b866). Evidence `/tmp/mdf16-qa/` (screenshots 01–16 + `cdp.js`). Chrome CDP 9340.
+
+Demo fixtures: 25 cards (10 todo / 2 doing / 2 blocked / **11 done**).
+
+### What passed
+
+- Board / List / Timeline view buttons, `role="group"` `aria-label="Task view"`, `aria-pressed` tracks the active view. Keys **1 / 2 / 3** switch views.
+- **/** focuses `aria-label="Filter tickets"`. Search `MDF-19` → 1 card. Nonsense query → EmptyState **No cards match** + **Clear filters**. Status Blocked → MDF-19, MDF-21. Owner Kelly → MDF-16, MDF-15. Date **Updated today** → MDF-15.
+- List: 25 rows, headers Key / Title / Status / Owner / Priority / Depends / Updated, every `tbody tr` `tabIndex=0`.
+- Timeline: region `aria-label="Task timeline"`, 25 id buttons, 25 spans, 15 dependency lines, `prefers-reduced-motion` kills the doing pulse.
+- Deep link `#/tasks/MDF-16` opens a Radix sheet titled MDF-16; **Escape** closes and hash returns to `#/tasks`. **j / k / Enter** selected MDF-13 and opened its sheet.
+- MDF-19 ASK ME: question, Answer textarea, Dismiss. Status / Priority / Owner native selects on the sheet.
+- Focus ring on Board (`--paper-focus-ring`). RTL mirrors the board and gantt. Dark and hc paint. 0 unnamed cards. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-16-1 · Default shell clips the **Done** column, and the board cannot scroll to it
+
+**Flow:** Paper Tasks board at the advertised min window and at a typical 1280×900 shell (sidebar + inspector).  
+**Steps:** Open `paper.html#/tasks` at 1280×900 (and 1024×640).  
+**Expected:** To do / Doing / Blocked / Done all visible, or an obvious horizontal affordance. Same bar as classic B-5.  
+**Actual:**
+- Four columns exist in the DOM (`Done, 11 cards`). At 1280×900 the board is **621px** wide; four × `min-width: 240px` plus gaps is **998px**. **Done** `visible: false` (left 1062, right 1304). Blocked is also clipped (right 1052). Screenshots `01-board-light.png`, `11-board-dark.png`, `12-board-hc.png`, `15-narrow-1024.png`.
+- At 1024×640: Done `visible: false`, `boardOverflow: true`.
+- `.pt-board` declares `overflow-x: auto`, but `MAIN.paper-main` is `container: screen / inline-size` at **661px**. `@container screen (max-width: 720px)` then sets `.pt-board { overflow: visible }`. Computed `overflow-x` at 1280×900 is **`visible`**. No scrollbar. The 11 done cards are unreachable on the board.
+- Toolbar lede is `2 doing · 2 blocked` and never mentions done, so the missing column has no count hint.
+
+**Severity: P1** (layout; the Done column is the audit trail of the board).
+
+### P2
+
+### B-16-2 · Timeline last tick is clipped
+
+**Flow:** Tasks → Timeline.  
+**Expected:** Axis labels Oct 4 … Oct 11 fully readable.  
+**Actual:** `.pt-gantt-axis { overflow: hidden }`. Tick at 100% uses `translateX(-50%)`, so **Oct 11** (left 923 / right 959) sits past the axis right edge (947) and paints as **“Oct”**. Screenshot `07-timeline.png`.
+
+**Severity: P2**
+
+### B-16-3 · Timeline span accessible name is key + status only
+
+**Flow:** screen reader on the gantt bars.  
+**Expected:** name includes the ticket title (the left-column button already shows key + title).  
+**Actual:** `aria-label={\`${t.key} ${STATUS_LABEL[t.status]}\`}` — e.g. `MDF-16 To do`. 25/25 spans. No `title` attribute.
+
+**Severity: P2** (a11y)
+
+### B-16-4 · `groupTimeline` owner labels never render
+
+**Flow:** Tasks → Timeline.  
+**Expected:** rows grouped by owner (the helper returns `{ id, label, tasks }`).  
+**Actual:** `groupTimeline(…).flatMap((g) => g.tasks)` throws the group labels away. The gantt is a flat created-at list. Unassigned / Kelly / Developer headings never appear.
+
+**Severity: P2**
+
+### B-16-5 · Board status change is pointer-only
+
+**Flow:** move a card between columns without a mouse.  
+**Expected:** a keyboard path on the board (or an announced alternative).  
+**Actual:** columns accept HTML5 drop only (`onDrop` → `patchTask`). Cards are `draggable` buttons. Keyboard users can still change status via the sheet `<select aria-label="Status">` after Enter — that path works, but the board itself has no keyboard drop / column target.
+
+**Severity: P2**
+
+### B-16-6 · Blocked card titles and chips clip with no tooltip
+
+**Flow:** Board, Blocked column (and Doing chips) at default width.  
+**Expected:** full title readable, or `title` on hover.  
+**Actual:** MDF-19 title cuts at “who-has-what, ro”; MDF-11 dependency chips clip MDF-10. `.pt-card-title` / chip row have no `title`. Screenshots `01-board-light.png`, `05-blocked.png`.
+
+**Severity: P2** (visual)
+
+### MDF-16 counts
+
+- P0: 0
+- P1: 1 (Done column clipped / unscrolled)
+- P2: 5
+- Electron: not launched
