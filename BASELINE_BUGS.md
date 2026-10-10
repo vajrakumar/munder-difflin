@@ -1169,3 +1169,34 @@ None this run.
 - Electron: not launched
 - MDF-48 fork-home default: **verified**
 
+---
+
+## MDF-53 Temps History 1024 re-check
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-5b0bb2.
+
+`0af3614c` / `604535ba` / merge `47b91346` on fork/main. Gallery `http://127.0.0.1:5183/paper.html#/temps` from the **main clone**. Developer :5179 left running. Evidence `/tmp/mdf53-qa/`. Electron not launched. Hard reload before each route.
+
+Re-check of **B-20-1**: History collided with the footer at 1024×640 (header ghosted through **184k live tokens**, Slack clipped to **Sla**, body rows gone). Folded P2s **B-20-2..6**.
+
+### Result
+
+| Viewport | Live h | History bottom | Footer top | Overlap | History columns |
+| --- | --- | --- | --- | --- | --- |
+| 1280×900 | 211 | 844 | 856 | **false** | Objective / Started / Runtime / Tokens / $ / Result / Slack |
+| 1024×640 | 123 | 592 | 600 (8px gap) | **false** | same six, all labelled |
+
+`.pw-history` flex-grows; `.pw-table-wrap` is `overflow: auto` (1024 wrap 706×151, table `scrollH` 208 > `clientH` 149 — third row is in the scroll). Footer shortcut row (`j`/`k` move, Enter open, `x` stop) stays fully visible. Live strip compact at `max-height: 700px`. Screenshots `01-temps-1280.png`, `02-temps-1024.png`.
+
+**B-20-1 verified.**
+
+Folded P2s:
+
+- **B-20-2 verified.** Pending hint `href` is `#/settings/autonomy` (`Settings › Autonomy & Budgets`).
+- **B-20-3 verified.** Computed meta / URL / `--paper-text-xs` are **12px**.
+- **B-20-4 verified.** History sheet title is the objective (**Finish the Memory browser (MDF-18): cards, list, graph and knowledge tab.**). Badges `["done"]` once. Screenshot `03-sheet.png`.
+- **B-20-5 verified.** Add connection on empty GitHub template: `hasSecretSaved` **false**, no “A secret is saved…”. Screenshot `05-add.png`.
+- **B-20-6 verified.** Per-row `aria-label`s **Test GitHub** / **Remove GitHub**, **Test Linear** / **Remove Linear**, **Test httpbin (public)** / **Remove httpbin (public)**. Screenshot `04-conn.png`.
+
+No P1 reopened. No new P0/P1/P2 this pass.
+
