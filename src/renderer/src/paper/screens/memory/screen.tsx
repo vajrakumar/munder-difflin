@@ -13,7 +13,7 @@ import type { PaperRoute } from '../../routes';
 import { MemoryGraph } from './graph';
 import {
   DEBOUNCE_MS, DEMO_AGENT_IDS, PalaceUnavailable, SUGGESTIONS, filterHits, graphFromHits,
-  hitMentions, memorySource, type HitSource, type KnowledgeRow, type MemoryHit, type PalaceStatus,
+  hitMentions, memorySource, type KnowledgeRow, type MemoryHit, type PalaceStatus,
   type SourceFilter, type View
 } from './model';
 import '../../common/common.css';
@@ -65,9 +65,11 @@ function ScreenInner(): JSX.Element {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
 
-  const agents = floor.agents.length ? floor.agents : DEMO_AGENT_IDS.map((id) => ({
-    id, name: id, status: 'idle' as const
-  }));
+  const agents = useMemo<PaperAgent[]>(
+    () => (floor.agents.length ? floor.agents : DEMO_AGENT_IDS.map((id) => ({ id, name: id, status: 'idle' as const }))),
+    [floor.agents]
+  );
+  const agentKey = agents.map((a) => a.id).join(',');
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebounced(query.trim()), DEBOUNCE_MS);
@@ -111,7 +113,9 @@ function ScreenInner(): JSX.Element {
       }
     );
     return () => { alive = false; };
-  }, [debounced, src, agents]);
+    // agentKey is the roster identity; we only refetch when that set changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debounced, src, agentKey]);
 
   const filtered = useMemo(() => {
     let rows = filterHits(hits, source, agent);
@@ -139,6 +143,7 @@ function ScreenInner(): JSX.Element {
   }, [open, src]);
 
   const view: View = tab === 'knowledge' ? 'cards' : tab;
+  const reflectRef = useRef<() => void>(() => { /* assigned after onReflect */ });
 
   useEffect(() => {
     function onKey(e: KeyboardEvent): void {
@@ -154,7 +159,7 @@ function ScreenInner(): JSX.Element {
       if (e.key === '3') { setTab('graph'); return; }
       if (e.key === 'r') {
         e.preventDefault();
-        void onReflect();
+        reflectRef.current();
         return;
       }
       if (tab === 'knowledge' || open) return;
@@ -174,7 +179,7 @@ function ScreenInner(): JSX.Element {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  });
+  }, [filtered, selectedId, tab, open]);
 
   async function onReflect(): Promise<void> {
     try {
@@ -185,6 +190,7 @@ function ScreenInner(): JSX.Element {
       toast(err instanceof Error ? err.message : 'Reflect failed');
     }
   }
+  reflectRef.current = () => { void onReflect(); };
 
   async function onAdd(): Promise<void> {
     try {
@@ -503,5 +509,3 @@ export function Screen(): JSX.Element {
     </ToastProvider>
   );
 }
-
-export type { HitSource };
