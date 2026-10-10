@@ -104,6 +104,11 @@
   color: var(--paper-text-muted);
 }
 
+.paper-nav-count {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
 .paper-nav-label {
   font-size: var(--paper-text-xs);
   font-weight: var(--paper-weight-medium);

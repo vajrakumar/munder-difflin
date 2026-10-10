@@ -1,0 +1,103 @@
+/* Shared bits for Paper screens. Tokens only. */
+
+.pc-rich {
+  font-size: var(--paper-text-md);
+  line-height: 1.6;
+  color: var(--paper-text);
+  overflow-wrap: anywhere;
+}
+.pc-rich > * + * { margin-block-start: 10px; }
+.pc-rich p, .pc-rich ul, .pc-rich ol { margin: 0; }
+.pc-rich ul, .pc-rich ol { padding-inline-start: 20px; }
+.pc-rich li + li { margin-block-start: 4px; }
+.pc-rich li::marker { color: var(--paper-text-muted); }
+.pc-rich strong { font-weight: var(--paper-weight-semibold); }
+.pc-rich code {
+  font-family: var(--paper-font-mono);
+  font-size: 0.86em;
+  padding: 1px 5px;
+  border-radius: var(--paper-radius-sm);
+  background: var(--paper-neutral-3);
+  border: 1px solid var(--paper-neutral-5);
+}
+
+/* Routed screens own the whole main area: no shell padding, no page scroll. */
+.paper-main:has(> .pc-screen) {
+  container: screen / inline-size;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+}
+.pc-screen {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Shared small pieces */
+.pc-key {
+  font-family: var(--paper-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  color: var(--paper-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.pc-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--paper-radius-full);
+  flex: 0 0 8px;
+}
+.pc-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--paper-radius-full);
+  border: 1px solid var(--paper-border);
+  font-size: 11px;
+  font-weight: var(--paper-weight-medium);
+  color: var(--paper-text-muted);
+}
+.pc-mode .pc-dot { width: 6px; height: 6px; flex-basis: 6px; }
+.pc-mode[data-mode="live"] .pc-dot { background: var(--paper-status-success); }
+.pc-mode[data-mode="demo"] .pc-dot { background: var(--paper-status-waiting); }
+
+.pc-textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-md);
+  background: var(--paper-bg);
+  color: var(--paper-text);
+  font: inherit;
+  font-size: var(--paper-text-md);
+  line-height: var(--paper-leading-md);
+  transition: border-color var(--paper-duration-fast) var(--paper-ease), box-shadow var(--paper-duration-fast) var(--paper-ease);
+}
+.pc-textarea::placeholder { color: var(--paper-text-muted); }
+.pc-textarea:hover { border-color: var(--paper-border-strong); }
+.pc-textarea:focus { outline: none; box-shadow: var(--paper-focus-ring); border-color: var(--paper-accent-8); }
+
+.pc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Focus rings for anything interactive the library does not style. */
+.pc-screen :where(button, a, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--paper-focus-ring);
+}

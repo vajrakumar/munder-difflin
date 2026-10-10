@@ -3,10 +3,12 @@ import {
   Inbox, ListTodo, Timer, Brain, Puzzle, Users, CircleDot, StickyNote, Home, PanelRight
 } from 'lucide-react';
 import { applyPaperTheme, paperThemeFromRoot, type PaperTheme } from '@/design/paper';
-import { Avatar, Button, EmptyState, IconButton, Kbd, StatusRing, Tooltip, TooltipProvider } from '@/ui';
+import { Avatar, Badge, Button, EmptyState, IconButton, Kbd, StatusRing, Tooltip, TooltipProvider } from '@/ui';
 import { setClassicUi } from './classicFlag';
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
 import { NAV, hrefFor, parseHash, type PaperRoute } from './routes';
+import { SCREENS } from './screens';
+import { useInboxNeedsYou } from './screens/inbox/badge';
 import './shell.css';
 
 const ICONS: Record<string, typeof Home> = {
@@ -57,6 +59,7 @@ export function PaperApp(): JSX.Element {
   const [palette, setPalette] = useState(false);
   const drag = useRef(false);
   useCommandPaletteHotkey(() => setPalette((v) => !v));
+  const needsYou = useInboxNeedsYou();
 
   useEffect(() => {
     applyPaperTheme(theme);
@@ -86,6 +89,7 @@ export function PaperApp(): JSX.Element {
   }, [sidebar]);
 
   const copy = useMemo(() => screenCopy(loc.route, loc.agentId), [loc]);
+  const Screen = SCREENS[loc.route];
   const collapsed = sidebar <= 72;
 
   return (
@@ -137,7 +141,9 @@ export function PaperApp(): JSX.Element {
                   >
                     <Icon size={16} />
                     {collapsed ? null : item.label}
-                    {!collapsed && item.hint ? <span className="paper-nav-badge">{item.hint}</span> : null}
+                    {item.id === 'inbox' && needsYou > 0 ? (
+                      <Badge tone="danger" className="paper-nav-count" aria-label={`${needsYou} need you`}>{needsYou}</Badge>
+                    ) : !collapsed && item.hint ? <span className="paper-nav-badge">{item.hint}</span> : null}
                   </a>
                 );
               })}
@@ -181,9 +187,13 @@ export function PaperApp(): JSX.Element {
             }}
           />
           <main className="paper-main">
-            <h1>{copy.title}</h1>
-            <p className="lede">{copy.lede}</p>
-            <EmptyState title="Not wired yet" description="This screen is a routed slot. Data hooks up in Phase 1." />
+            {Screen ? <Screen /> : (
+              <>
+                <h1>{copy.title}</h1>
+                <p className="lede">{copy.lede}</p>
+                <EmptyState title="Not wired yet" description="This screen is a routed slot. Data hooks up in Phase 1." />
+              </>
+            )}
           </main>
           <CommandPalette open={palette} onOpenChange={setPalette} />
           {inspector ? (
