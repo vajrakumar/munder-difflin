@@ -158,6 +158,7 @@
   margin: 8px 0 0;
   font-size: var(--paper-text-sm);
   color: var(--paper-accent-11);
+  unicode-bidi: isolate;
 }
 
 @media (prefers-reduced-motion: reduce) {

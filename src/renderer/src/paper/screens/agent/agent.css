@@ -44,7 +44,9 @@
   grid-template-rows: minmax(0, 1fr);
 }
 .pa-root[data-orch="true"] .pa-body {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
+  /* Cap the panel so the terminal keeps a usable column when the room is
+     ~661px (default shell: sidebar + inspector). 420px left only ~241px. */
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 320px);
 }
 .pa-root[data-orch="true"] .paper-tabs-list {
   flex-wrap: wrap;
@@ -59,12 +61,28 @@
 }
 
 @container room (max-width: 760px) {
-  .pa-body,
-  .pa-root[data-orch="true"] .pa-body {
+  .pa-body {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(160px, 42%) minmax(0, 1fr);
   }
-  .pa-term {
+  .pa-root:not([data-orch="true"]) .pa-term {
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--paper-border);
+  }
+  /* Orchestrator stays two-pane at the default 661px room and at 1024×640
+     (~405px). Stacking made the terminal a strip (B-14-1). */
+  .pa-root[data-orch="true"] .pa-body {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 42%);
+    grid-template-rows: minmax(0, 1fr);
+  }
+}
+
+@container room (max-width: 360px) {
+  .pa-root[data-orch="true"] .pa-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(220px, 1fr) minmax(140px, 38%);
+  }
+  .pa-root[data-orch="true"] .pa-term {
     border-inline-end: 0;
     border-block-end: 1px solid var(--paper-border);
   }
@@ -154,6 +172,13 @@
 .pa-side { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .pa-tabs { flex: 1; min-height: 0; gap: 0; }
 .pa-tabs > .paper-tabs-list { padding: 8px 12px 0; }
+.pa-tabs .paper-tabs-trigger[data-state="active"]:focus-visible {
+  box-shadow: var(--paper-focus-ring);
+}
+.pa-input,
+.pa-hint {
+  unicode-bidi: isolate;
+}
 .pa-pane { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
 .pa-pane[data-state="inactive"] { display: none; }
 .pa-pane:has(.po-board) {
