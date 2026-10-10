@@ -24,7 +24,8 @@ const NAV_ACTIONS: PaperAction[] = (
     ['capabilities', 'Go to Capabilities', 'skills mcp tools'],
     ['temps', 'Go to Temps', 'workers ephemeral'],
     ['stapler', 'Go to Stapler', 'dictate meeting capture'],
-    ['notes', 'Go to Notes', 'private']
+    ['notes', 'Go to Notes', 'private'],
+    ['orchestrator', 'Open Orchestrator', 'michael god routing breaker budget board']
   ] as Array<[PaperRoute, string, string]>
 ).map(([id, label, keywords]) => ({
   id: `nav.${id}`,

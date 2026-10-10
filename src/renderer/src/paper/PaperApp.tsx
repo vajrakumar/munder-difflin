@@ -6,8 +6,9 @@ import { APP_DISPLAY_NAME } from '@shared/forkIdentity';
 import { setClassicUi } from './classicFlag';
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
 import { NotesPane } from './NotesPane';
-import { hrefFor, parseHash, type PaperRoute } from './routes';
+import { hrefFor, isGodRoom, parseHash, type PaperRoute } from './routes';
 import { SCREENS } from './screens';
+import { Screen as OrchestratorScreen } from './screens/orchestrator/screen';
 import { useInboxNeedsYou } from './screens/inbox/badge';
 import { Sidebar } from './Sidebar';
 import { ProSidebarProvider, useProSidebar } from './sidebarState';
@@ -30,7 +31,8 @@ function screenCopy(route: PaperRoute, agentName?: string): { title: string; led
     temps: { title: 'Temps', lede: 'History of short-lived workers — MDF-20.' },
     stapler: { title: 'Stapler', lede: 'Floating ring and captures — MDF-25.' },
     notes: { title: 'Notes', lede: 'Private, searchable, on this machine.' },
-    agent: { title: 'Agent', lede: '' }
+    agent: { title: 'Agent', lede: '' },
+    orchestrator: { title: agentName ?? 'Michael', lede: 'Routing, the board, breaker and fleet spend, on the agent room.' }
   };
   return map[route];
 }
@@ -95,7 +97,7 @@ function PaperShell(): JSX.Element {
     a.status === 'working' || a.status === 'thinking' || a.status === 'looping'
   ).length;
   const askedCount = rail.agents.filter((a) => a.askedYou).length;
-  const Screen = SCREENS[loc.route];
+  const Screen = isGodRoom(loc) ? OrchestratorScreen : SCREENS[loc.route];
 
   function goNote(id: string): void {
     window.location.hash = hrefFor('notes', id);

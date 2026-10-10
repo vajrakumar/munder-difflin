@@ -5,7 +5,7 @@
  *  Live (Electron): the terminal is the agent's pooled xterm (PtyTerminalView)
  *  and the composer queues into the agent's prompt like the classic composer.
  *  Demo (gallery): a static xterm and the composer posts to the floor mail. */
-import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { ImagePlus, Paperclip, Send, SquareTerminal, X } from 'lucide-react';
 import {
   Avatar, Badge, Button, EmptyState, IconButton, StatusRing, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, type BadgeTone
@@ -27,6 +27,8 @@ import '../../common/common.css';
 import './agent.css';
 
 export const route: PaperRoute = 'agent';
+
+export type ExtraTab = { id: string; label: string; content: ReactNode };
 
 const MAX_ATTACHMENTS = 8;
 
@@ -50,7 +52,11 @@ function hasBridge(): boolean {
 // ─── Screen ────────────────────────────────────────────────────────────────
 
 export function Screen(): JSX.Element {
-  const id = useAgentId();
+  return <AgentRoom agentId={useAgentId()} />;
+}
+
+/** Shared room layout. The Orchestrator (MDF-14) mounts this with extra tabs. */
+export function AgentRoom({ agentId: id, extraTabs = [] }: { agentId?: string; extraTabs?: ExtraTab[] }): JSX.Element {
   const floor = useFloor();
   const live = useStore((s) => (id ? s.agents.find((a) => a.id === id) : undefined));
   const rail = DEFAULT_AGENTS.find((a) => a.id === id);
@@ -76,7 +82,7 @@ export function Screen(): JSX.Element {
   }
 
   return (
-    <div className="pc-screen pa-root">
+    <div className="pc-screen pa-root" data-orch={extraTabs.length ? 'true' : undefined}>
       <header className="pa-head">
         <StatusRing status={status}><Avatar name={name} /></StatusRing>
         <div className="pa-head-text">
@@ -110,10 +116,14 @@ export function Screen(): JSX.Element {
 
         <aside className="pa-side">
           <Tabs defaultValue="overview" className="paper-tabs pa-tabs">
-            <TabsList aria-label="Agent details">
+            <TabsList aria-label={extraTabs.length ? 'Orchestrator panels' : 'Agent details'}>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="messages">Messages{mail.length ? ` ${mail.length}` : ''}</TabsTrigger>
               <TabsTrigger value="tasks">Tasks{tasks.length ? ` ${tasks.length}` : ''}</TabsTrigger>
+              {extraTabs.length ? <span className="pa-tab-break" aria-hidden /> : null}
+              {extraTabs.map((t) => (
+                <TabsTrigger key={t.id} value={t.id}>{t.label}</TabsTrigger>
+              ))}
             </TabsList>
             <TabsContent value="overview" className="pa-pane">
               <Overview info={info} line={rail?.line} cost={rail?.costToday} current={current} tasks={tasks} mailCount={mail.length} />
@@ -124,6 +134,9 @@ export function Screen(): JSX.Element {
             <TabsContent value="tasks" className="pa-pane">
               <TaskList tasks={tasks} name={name} />
             </TabsContent>
+            {extraTabs.map((t) => (
+              <TabsContent key={t.id} value={t.id} className="pa-pane">{t.content}</TabsContent>
+            ))}
           </Tabs>
         </aside>
       </div>
