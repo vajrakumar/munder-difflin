@@ -160,7 +160,7 @@ function AutomationsScreen(): JSX.Element {
       <div className="pa-body">
         {!state.loaded ? (
           <div className="pa-skeleton" aria-busy="true" aria-label={t.loading}>
-            {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={36} />)}
+            {[0, 1, 2, 3].map((i) => <Skeleton key={i} style={{ height: 36, width: '100%' }} />)}
           </div>
         ) : state.error ? (
           <EmptyState title={t.error(state.error)} action={<Button onClick={api.reload}><RefreshCw size={14} /> {t.retry}</Button>} />
@@ -250,13 +250,13 @@ function AutomationsScreen(): JSX.Element {
 
       <Sheet open={!!editing} onOpenChange={(o) => { if (!o) setEditing(null); }}>
         {editing?.kind === 'schedule' && (
-          <SheetContent title={t.editSchedule} className="pa-sheet">
+          <SheetContent title={t.editSchedule} className="paper-sheet-wide">
             <ScheduleEditor t={t} api={api} draft={editing.draft} agents={agentOptions} now={now}
               onDone={() => setEditing(null)} />
           </SheetContent>
         )}
         {editing?.kind === 'webhook' && (
-          <SheetContent title={t.editWebhook} className="pa-sheet">
+          <SheetContent title={t.editWebhook} className="paper-sheet-wide">
             <WebhookEditor t={t} api={api} draft={editing.draft} url={state.urls[editing.draft.id] ?? ''}
               onDone={() => setEditing(null)} />
           </SheetContent>
@@ -479,7 +479,7 @@ function WebhookEditor({ t, api, draft: initial, url, onDone }: {
       </div>
 
       <Label>{t.schema}</Label>
-      <Suspense fallback={<Skeleton height={180} />}>
+      <Suspense fallback={<Skeleton style={{ height: 180, width: '100%' }} />}>
         <JsonEditor value={d.schema} onChange={(v) => setD({ ...d, schema: v })} />
       </Suspense>
 

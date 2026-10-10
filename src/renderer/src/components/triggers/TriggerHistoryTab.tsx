@@ -432,6 +432,7 @@ export function TriggerHistoryTab() {
       org: { total: 0, pending: 0 }
     };
     for (const e of entries) {
+      if (e.source !== 'webhook' && e.source !== 'org') continue;
       const bucket = c[e.source];
       if (!bucket) continue;
       bucket.total += 1;

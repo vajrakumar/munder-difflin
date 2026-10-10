@@ -160,13 +160,6 @@
   margin-bottom: 8px;
 }
 
-/* Editor sheet — wider than the default 360px so schema + sample fit. */
-.pa-sheet {
-  width: min(480px, 100vw);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
 .pa-sheet-body {
   display: flex;
   flex-direction: column;
