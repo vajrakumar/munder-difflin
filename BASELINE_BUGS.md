@@ -942,3 +942,80 @@ None this run.
 - P2: 3
 - Electron: not launched
 
+---
+
+## MDF-20 Temps + Connections (paper.html#/temps, #/settings/connections)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-4f54b3.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** at `http://127.0.0.1:5183/paper.html` (merge `7a0b99d5`; HEAD of the clone at QA time `3b48e7dc`). Developer gallery :5179 left running. Evidence `/tmp/mdf20-qa/`. Chrome CDP 9340. Hard reload before each route.
+
+Demo: `tempsSource()` / `connectionsSource()` (no `window.cth`). Temps **1 / 4 live** (Darryl), 1 pending (Stapler), 3 history. Connections 3 rows (GitHub, Linear, httpbin). Badge **Demo data**. Gallery Test uses the in-memory mock (`HTTP 200 in 42 ms` on Linear) — that is the designed fallback, not a live probe.
+
+### What passed
+
+- **Temps.** Live card Stop + Open terminal. Pending copy names Settings › Autonomy & Budgets. History table Objective / Started / Runtime / Tokens / $ / Result / Slack. **j / k** move live → history. **Enter** opens Andy sheet (failed, failure reason **idle 20 min — never signaled done**). **x** opens **Stop this temp?** with Cancel / Stop temp. Result filter **failed** works. Dark / RTL paint. 0 unnamed chrome buttons. Screenshots `01-temps.png` … `08-temps-1024.png`.
+- **Connections.** `#/settings/connections`. Secrets render as **••••**, never echoed. **n** opens Add connection (Template, Label, Base URL, Auth type, Secret `type=password`, Enabled for agents). **t** tests the selected row. **j / k** move. Remove is present. 1024×640 table stays in view. Screenshots `09-conn.png` … `15-conn-1024.png`. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-20-1 · Temps History collides with the footer at 1024×640
+
+**Flow:** `#/temps` at min window 1024×640.  
+**Expected:** Live, Pending, History, and the key footer all readable; History columns stay labelled.  
+**Actual:** History header paints through the footer (**Objective** ghosted, Slack clipped to **Sla**). Body rows are gone. Screenshot `08-temps-1024.png`. At 1280 the table is fine (`01-temps.png`).
+
+**Severity: P1** (layout — the history ledger is the Temps job at the min window).
+
+### P2
+
+### B-20-2 · Autonomy link goes to Home
+
+**Flow:** Pending requests hint.  
+**Expected:** **Settings › Autonomy & Budgets** opens that settings pane.  
+**Actual:** `<a href="#/">{COPY.autonomyLink}</a>`. Hash `#/` is Home. The same phrase is already in the sentence, so the control looks like a duplicate.
+
+**Severity: P2**
+
+### B-20-3 · Temps card meta and Connections URLs are **11px**
+
+**Flow:** type scale vs DESIGN.md (`--paper-text-xs` = 12).  
+**Actual:** `.pw-card-meta { font-size: 11px }`, `.pn-url { font-size: 11px }`, `.pn-test` / `.pn-help` 11px. Computed `--paper-text-xs` is **12px**.
+
+**Severity: P2**
+
+### B-20-4 · History sheet title is the worker name; **failed** is painted twice
+
+**Flow:** **Enter** on Andy’s row.  
+**Expected:** the objective as the heading; result once.  
+**Actual:** Radix title **Andy**, description **failed**, then a **failed** badge. Screenshot `03-sheet.png`.
+
+**Severity: P2**
+
+### B-20-5 · Add connection always says a secret is already saved
+
+**Flow:** **n** on an empty GitHub template.  
+**Expected:** the replace-secret hint only when `hasSecret`.  
+**Actual:** `{COPY.secretSaved}` (**A secret is saved. Type a new one only to replace it.**) is unconditional under the password field. Screenshot `12-conn-add.png`.
+
+**Severity: P2**
+
+### B-20-6 · Test / Remove share one name on every row
+
+**Flow:** Connections table.  
+**Expected:** **Test Linear**, **Remove GitHub**.  
+**Actual:** every row is a `<Button>` with visible text **Test** / **Remove** and no per-row `aria-label`. Screenshot `09-conn.png`.
+
+**Severity: P2** (a11y)
+
+### MDF-20 counts
+
+- P0: 0
+- P1: 1 (Temps History at 1024)
+- P2: 5
+- Electron: not launched
+
