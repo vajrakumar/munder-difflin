@@ -229,7 +229,7 @@ function ScreenInner(): JSX.Element {
           <EmptyState icon={<Timer size={28} />} title={COPY.empty.title} description={COPY.empty.body} />
         ) : (
           <>
-            <section className="pw-section" aria-label={COPY.liveStrip}>
+            <section className="pw-section pw-live" aria-label={COPY.liveStrip}>
               <div className="pw-section-head">
                 <h2>{COPY.liveStrip}</h2>
                 <span className="pc-key">{live.length}</span>
@@ -244,15 +244,18 @@ function ScreenInner(): JSX.Element {
             </section>
 
             {pending.length > 0 ? (
-              <section className="pw-section" aria-label={COPY.pending}>
+              <section className="pw-section pw-pending-sec" aria-label={COPY.pending}>
                 <div className="pw-section-head">
                   <h2>{COPY.pending}</h2>
                   <span className="pc-key">{pending.length}</span>
                 </div>
                 <p className="pw-hint">
-                  {snap?.spawnEnabled ? COPY.pendingHintOn : COPY.pendingHintOff}
-                  {' '}
-                  <a href="#/">{COPY.autonomyLink}</a>
+                  {snap?.spawnEnabled ? COPY.pendingHintOn : (
+                    <>
+                      {COPY.pendingHintOff}{' '}
+                      <a href={hrefFor('settings', 'autonomy')}>{COPY.autonomyLink}</a>.
+                    </>
+                  )}
                 </p>
                 <div className="pw-pending">
                   {pending.map((p) => (
@@ -266,7 +269,7 @@ function ScreenInner(): JSX.Element {
               </section>
             ) : null}
 
-            <section className="pw-section" aria-label={COPY.history}>
+            <section className="pw-section pw-history" aria-label={COPY.history}>
               <div className="pw-section-head">
                 <h2>{COPY.history}</h2>
                 <span className="pc-key">{history.length}</span>
@@ -334,7 +337,7 @@ function ScreenInner(): JSX.Element {
 
       <Sheet open={!!open} onOpenChange={(v) => { if (!v) setOpen(null); }}>
         {open ? (
-          <SheetContent title={open.name} description={open.result}>
+          <SheetContent title={open.objective || open.name}>
             <div className="pw-sheet-body">
               <div className="pw-sheet-meta">
                 <Badge tone={resultTone(open.result)}>{open.result}</Badge>

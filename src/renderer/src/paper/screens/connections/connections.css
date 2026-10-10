@@ -46,7 +46,7 @@
 }
 .pn-url {
   font-family: var(--paper-font-mono);
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -54,7 +54,7 @@
 }
 .pn-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .pn-test {
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -74,7 +74,7 @@
 }
 .pn-help {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
 }
 .pn-check {
@@ -98,7 +98,7 @@
   flex: 0 0 auto;
   padding-block-start: 8px;
   border-top: 1px solid var(--paper-border);
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
 }
 .pn-foot-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-inline-start: auto; }

@@ -8,7 +8,7 @@ export const COPY = {
   liveStrip: 'Live',
   history: 'History',
   pending: 'Pending requests',
-  pendingHintOff: 'The temps switch is off, so these sit in spawn-requests until you turn it on in Settings › Autonomy & Budgets.',
+  pendingHintOff: 'The temps switch is off, so these sit in spawn-requests until you turn it on in',
   pendingHintOn: 'Waiting for a free slot. The orchestrator will hire them in order.',
   autonomyLink: 'Settings › Autonomy & Budgets',
   empty: {

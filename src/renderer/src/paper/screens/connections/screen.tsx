@@ -49,6 +49,7 @@ interface Draft {
   authHeader: string;
   secret: string;
   enabled: boolean;
+  hasSecret: boolean;
 }
 
 function emptyDraft(): Draft {
@@ -62,7 +63,8 @@ function emptyDraft(): Draft {
     authType: d.authType,
     authHeader: d.authHeader ?? '',
     secret: '',
-    enabled: true
+    enabled: true,
+    hasSecret: false
   };
 }
 
@@ -164,7 +166,8 @@ function ScreenInner(): JSX.Element {
       authType: d.authType,
       authHeader: d.authHeader ?? '',
       secret: '',
-      enabled: true
+      enabled: true,
+      hasSecret: false
     });
   }
 
@@ -269,6 +272,7 @@ function ScreenInner(): JSX.Element {
                         <Button
                           size="sm"
                           variant="secondary"
+                          aria-label={`${COPY.test} ${r.label}`}
                           disabled={testingId === r.id}
                           onClick={(e) => { e.stopPropagation(); void onTest(r.id); }}
                         >
@@ -277,6 +281,7 @@ function ScreenInner(): JSX.Element {
                         <Button
                           size="sm"
                           variant="ghost"
+                          aria-label={`${COPY.remove} ${r.label}`}
                           onClick={(e) => { e.stopPropagation(); void onRemove(r.id); }}
                         >
                           {COPY.remove}
@@ -365,7 +370,7 @@ function ScreenInner(): JSX.Element {
                   onChange={(e) => setDraft((d) => ({ ...d, secret: e.target.value }))}
                   placeholder={COPY.secretPlaceholder}
                 />
-                <p className="pn-help">{COPY.secretSaved}</p>
+                {draft.hasSecret ? <p className="pn-help">{COPY.secretSaved}</p> : null}
               </div>
             ) : null}
             <label className="pn-check">
