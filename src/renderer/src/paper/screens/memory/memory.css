@@ -134,6 +134,7 @@
 .pm-table tbody tr[aria-current="true"] {
   background: var(--paper-accent-2, var(--paper-neutral-3));
 }
+.pm-table td:last-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pm-owner {
   display: inline-flex;
   align-items: center;
@@ -163,7 +164,7 @@
 .pm-graph-legend {
   position: absolute;
   inset-inline-start: 10px;
-  inset-block-end: 10px;
+  inset-block-start: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px 10px;

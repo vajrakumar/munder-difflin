@@ -135,14 +135,18 @@ export function rankHits(hits: MemoryHit[]): MemoryHit[] {
   return [...hits].sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || (Date.parse(b.writtenAt ?? '') || 0) - (Date.parse(a.writtenAt ?? '') || 0));
 }
 
-/** Keyword relevance for the demo backend and the live fallback over memory.md. */
+/** Keyword relevance for the demo backend and the live fallback over memory.md.
+ *  Short glue words (len 2–3) are dropped so a query like `zzzz-no-such-memory`
+ *  does not match every note that merely contains "memory". */
 export function keywordScore(text: string, query: string): number {
-  const words = query.toLowerCase().split(/\W+/).filter((w) => w.length > 2);
-  if (!words.length) return 0;
+  const raw = query.toLowerCase().split(/\W+/).filter(Boolean);
+  const words = raw.filter((w) => w.length > 3);
+  const terms = words.length ? words : raw.filter((w) => w.length > 2);
+  if (!terms.length) return 0;
   const hay = text.toLowerCase();
   let hit = 0;
-  for (const w of words) if (hay.includes(w)) hit++;
-  return hit / words.length;
+  for (const w of terms) if (hay.includes(w)) hit++;
+  return hit / terms.length;
 }
 
 export const SUGGESTIONS = ['release checklist', 'electron upgrade', 'what did we decide about the sidebar', 'broker token', 'preview tips'];
@@ -341,7 +345,7 @@ function demoSource(): MemorySource {
     search(query) {
       const scored = [...memHits(), ...docHits()]
         .map((h) => ({ ...h, score: keywordScore(h.text, query) }))
-        .filter((h) => (h.score ?? 0) > 0);
+        .filter((h) => (h.score ?? 0) >= 1);
       return wait(rankHits(scored));
     },
     recent: () => wait(rankHits(memHits()).slice(0, 8)),

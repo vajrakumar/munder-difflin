@@ -3,7 +3,6 @@
  *  or the legend. */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { forceLayout, type Positions } from '@/components/memoryGraph/forceLayout';
-import { HoverCard } from '@/ui';
 import { clusterHue, type GNode, type GraphModel } from './model';
 
 function colorOf(cluster: number, kind: 'agent' | 'topic'): string {
@@ -29,7 +28,7 @@ function layoutOf(model: GraphModel, w: number, h: number): Positions {
   return forceLayout(
     model.nodes.map((node) => ({ id: node.id, gravityBias: node.kind === 'agent' ? 1.4 : 0.7 })),
     model.edges.map((e) => ({ source: e.source, target: e.target, strength: 0.45 })),
-    { width: Math.max(120, w), height: Math.max(120, h), iterations, padding: 36 }
+    { width: Math.max(120, w), height: Math.max(120, h), iterations, padding: 48 }
   );
 }
 
@@ -116,7 +115,8 @@ type GlHandle = {
 };
 
 function attachGl(canvas: HTMLCanvasElement): GlHandle | null {
-  const gl = canvas.getContext('webgl', { antialias: true, alpha: true, premultipliedAlpha: false });
+  const opts: WebGLContextAttributes = { antialias: true, alpha: true, premultipliedAlpha: false, failIfMajorPerformanceCaveat: false };
+  const gl = (canvas.getContext('webgl', opts) ?? canvas.getContext('experimental-webgl', opts)) as WebGLRenderingContext | null;
   if (!gl) return null;
   const prog = program(gl);
   const buf = gl.createBuffer();
@@ -311,28 +311,20 @@ export function MemoryGraph({
             const p = layout.get(n.id);
             if (!p) return null;
             return (
-              <HoverCard key={n.id} content={<NodeTip node={n} />}>
-                <g
-                  transform={`translate(${p.x},${p.y})`}
-                  onClick={(ev) => { ev.stopPropagation(); onPick(n); }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <circle
-                    r={n.kind === 'agent' ? 8 : 5}
-                    fill={colorOf(n.cluster, n.kind)}
-                    stroke={highlightAgent && n.agentIds.includes(highlightAgent) ? 'var(--paper-text)' : 'transparent'}
-                    strokeWidth={2}
-                  />
-                  {n.kind === 'agent' ? (
-                    <text className="pm-node-label" x={10} y={4}>{n.label}</text>
-                  ) : null}
-                </g>
-              </HoverCard>
+              <circle
+                key={n.id}
+                cx={p.x}
+                cy={p.y}
+                r={n.kind === 'agent' ? 8 : 5}
+                fill={colorOf(n.cluster, n.kind)}
+                stroke={highlightAgent && n.agentIds.includes(highlightAgent) ? 'var(--paper-text)' : 'transparent'}
+                strokeWidth={2}
+              />
             );
           })}
         </svg>
       )}
-      {webgl ? labels.map((n) => {
+      {labels.map((n) => {
         const p = layout.get(n.id);
         if (!p) return null;
         return (
@@ -344,8 +336,8 @@ export function MemoryGraph({
             {n.label}
           </span>
         );
-      }) : null}
-      {hover && webgl ? (
+      })}
+      {hover ? (
         <div className="paper-hover-card pm-hover" style={{ left: hover.x, top: hover.y }}>
           <NodeTip node={hover.node} />
         </div>

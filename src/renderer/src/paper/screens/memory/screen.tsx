@@ -6,6 +6,7 @@ import {
   Avatar, Badge, Button, Card, EmptyState, Input, Kbd, Sheet, SheetContent, Skeleton,
   Table, TBody, TD, TH, THead, TR, ToastProvider, useToast
 } from '@/ui';
+import { RichText } from '../../common/RichText';
 import { agentName, useFloor } from '../../data/hive';
 import type { PaperAgent } from '../../data/model';
 import { relative } from '../../data/time';
@@ -492,7 +493,7 @@ function ScreenInner(): JSX.Element {
                 <Badge tone={open.source === 'knowledge' ? 'accent' : 'neutral'}>{open.source}</Badge>
                 <span>{relative(open.writtenAt) || ''}</span>
               </div>
-              <div className="pm-sheet-text">{full || open.text}</div>
+              <div className="pm-sheet-text"><RichText text={(full || open.text).replace(/^#+\s*/gm, '')} /></div>
               <Button variant="secondary" onClick={() => void onOpenFile(open)}>Open file</Button>
             </div>
           </SheetContent>
