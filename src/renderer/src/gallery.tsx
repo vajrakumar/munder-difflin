@@ -7,6 +7,7 @@ import './design/paper/tokens.css';
 import './ui/ui.css';
 import {
   Avatar,
+  StatusRing,
   Badge,
   Button,
   Card,
@@ -181,8 +182,10 @@ function Gallery(): JSX.Element {
       <section>
         <h2>Identity</h2>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Avatar name="Michael Scott" />
-          <Avatar name="Developer" size="lg" />
+          <StatusRing status="idle"><Avatar name="Michael Scott" /></StatusRing>
+          <StatusRing status="working"><Avatar name="Developer" size="lg" /></StatusRing>
+          <StatusRing status="blocked"><Avatar name="Tester" /></StatusRing>
+          <StatusRing status="thinking"><Avatar name="Dwight" /></StatusRing>
           <Badge>idle</Badge>
           <Badge tone="accent">waiting</Badge>
           <Badge tone="warning">working</Badge>

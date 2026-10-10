@@ -15,7 +15,7 @@ export { Menu, MenuTrigger, MenuContent, MenuItem } from './Menu';
 export { ToastProvider, useToast } from './Toast';
 export { Badge } from './Badge';
 export type { BadgeTone } from './Badge';
-export { Avatar, initialsFrom } from './Avatar';
+export { Avatar, StatusRing, initialsFrom, hueFromName } from './Avatar';
 export { Card } from './Card';
 export { Table, THead, TBody, TR, TH, TD } from './Table';
 export { EmptyState } from './EmptyState';

@@ -3,7 +3,7 @@ import {
   Inbox, ListTodo, Timer, Brain, Puzzle, Users, CircleDot, StickyNote, Home, PanelRight
 } from 'lucide-react';
 import { applyPaperTheme, paperThemeFromRoot, type PaperTheme } from '@/design/paper';
-import { Avatar, Button, EmptyState, IconButton, Kbd, Tooltip, TooltipProvider } from '@/ui';
+import { Avatar, Button, EmptyState, IconButton, Kbd, StatusRing, Tooltip, TooltipProvider } from '@/ui';
 import { setClassicUi } from './classicFlag';
 import { NAV, hrefFor, parseHash, type PaperRoute } from './routes';
 import './shell.css';
@@ -21,9 +21,9 @@ const ICONS: Record<string, typeof Home> = {
 };
 
 const DEMO_AGENTS = [
-  { id: 'god', name: 'Michael', line: 'idle' },
-  { id: 'developer-mv2fn62v', name: 'Developer', line: 'working' },
-  { id: 'tester-mv2fnyz5', name: 'Tester', line: 'idle' }
+  { id: 'god', name: 'Michael', line: 'idle' as const },
+  { id: 'developer-mv2fn62v', name: 'Developer', line: 'working' as const },
+  { id: 'tester-mv2fnyz5', name: 'Tester', line: 'waiting' as const }
 ];
 
 function screenCopy(route: PaperRoute, agentId?: string): { title: string; lede: string } {
@@ -146,7 +146,9 @@ export function PaperApp(): JSX.Element {
                   href={hrefFor('agent', a.id)}
                   aria-current={loc.route === 'agent' && loc.agentId === a.id ? 'page' : undefined}
                 >
-                  <Avatar name={a.name} size="sm" />
+                  <StatusRing status={a.line}>
+                    <Avatar name={a.name} size="sm" />
+                  </StatusRing>
                   {collapsed ? null : a.name}
                   {collapsed ? null : <span className="paper-agent-live">{a.line}</span>}
                 </a>
