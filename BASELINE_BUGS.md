@@ -422,3 +422,31 @@ Tester (`tester-mv2fnyz5`) · 2026-10-10 · browser only · gallery `http://127.
 | P1 B-810-5 Palette Tab trap | **Verified.** Overlay `tabIndex=-1`; 8 Tabs stayed on the palette input; Escape closes. |
 
 No P1 reopened. Residual (not a reopen): every Combobox hardcodes `id="paper-cb-list"`, so two gallery Comboboxes share one listbox id — SR `aria-controls` can point at the wrong list. Not one of the three P1s.
+
+---
+
+## Electron 44 clipboard (be5fba11)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-1d31fe.
+
+Rebuilt with `npm run dist:fork:mac` in `/Users/vajra/APILayer/myDifflin/munder-difflin` (first pack failed: `node_modules/electron/dist` missing after npm install of 44.7.0; `node node_modules/electron/install.js` then pack succeeded). App UA **Electron/44.7.0** Chrome/152. Packaged hive `app-start` `electron: "44.7.0"`. Evidence `/tmp/mdf-e44-clip/`.
+
+Isolation: live `hive/log.jsonl` **delta 0** vs pre-launch snapshot. Installed Munder Difflin pid 55356 still running after fork quit.
+
+### Checks
+
+| Surface | Result |
+| --- | --- |
+| `readClipboardSync` / `readClipboard` / `copyToClipboard` | **Pass.** pbcopy marker round-tripped on both sync and async; writeText then sync-read matched. |
+| Terminal text paste | **Pass.** `.xterm` `contextmenu` (the `pasteClipboard` path) inserted `ZZZCLIP…` into Michael's prompt (`08-js-contextmenu.png`). |
+| Terminal text copy | **Pass** at IPC (`copyToClipboard` is what `copySelection` calls). Selection-copy gesture not separately screenshotted. |
+| Image paste (`clipboard:saveImage` / `readClipboardPng`) | **Pass.** macOS PNG clipboard → temp file, PNG signature `89504e47`, 78 bytes. Same helper the composer `onPaste` awaits. |
+| Dictation paste race | **Pass** at the sync bridge. After `pbcopy NEW`, `readClipboardSync` returned NEW in 1 ms; restoring OLD then read OLD. `pasteClipboard()` uses this sync read inside the keydown/contextmenu handler. |
+
+Quit: Cmd+Q → QUITTING NOW? / 2 agents → kill all & quit; process gone; no leftover Vajras.
+
+### Counts
+
+- P0: 0
+- P1: 0
+- P2: 0 (clipboard). Cold launch still opens the hive picker (already B-pkg-1). Window title is **Vajra's Office** on this HEAD (B-pkg-2 was on the 8b829b58 asar).
