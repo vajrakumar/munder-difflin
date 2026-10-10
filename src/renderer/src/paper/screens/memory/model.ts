@@ -146,6 +146,38 @@ export function keywordScore(text: string, query: string): number {
 }
 
 export const SUGGESTIONS = ['release checklist', 'electron upgrade', 'what did we decide about the sidebar', 'broker token', 'preview tips'];
+export const DEBOUNCE_MS = 250;
+export const CLUSTER_HUES = [210, 28, 152, 262, 42, 188, 330, 92, 0, 240];
+
+export function clusterHue(cluster: number): number {
+  return CLUSTER_HUES[((cluster % CLUSTER_HUES.length) + CLUSTER_HUES.length) % CLUSTER_HUES.length];
+}
+
+/** Graph of the current result set so Cards, List and Graph always agree. */
+export function graphFromHits(agents: PaperAgent[], hits: MemoryHit[]): GraphModel {
+  const memories: Record<string, string> = {};
+  const seen = new Set<string>();
+  let knowledge = '';
+  for (const h of hits) {
+    if (h.agentId) {
+      seen.add(h.agentId);
+      memories[h.agentId] = `${memories[h.agentId] ?? ''}\n## ${h.file}\n${h.text}`;
+    } else {
+      knowledge += `\n## ${h.file}\n${h.text}`;
+    }
+  }
+  const present = agents.filter((a) => seen.has(a.id));
+  if (knowledge) {
+    memories.knowledge = knowledge;
+    present.push({ id: 'knowledge', name: 'Knowledge', status: 'idle' });
+  }
+  if (!present.length) return { nodes: [], edges: [], clusters: [] };
+  return graphOf(present, memories);
+}
+
+export function hitMentions(hit: MemoryHit, topic: string): boolean {
+  return hit.text.toLowerCase().includes(topic.toLowerCase());
+}
 
 // ─── Graph model ───────────────────────────────────────────────────────────
 
