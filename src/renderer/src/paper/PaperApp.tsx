@@ -7,6 +7,7 @@ import { Avatar, Button, EmptyState, IconButton, Kbd, StatusRing, Tooltip, Toolt
 import { setClassicUi } from './classicFlag';
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
 import { NAV, hrefFor, parseHash, type PaperRoute } from './routes';
+import { SCREENS } from './screens';
 import './shell.css';
 
 const ICONS: Record<string, typeof Home> = {
@@ -86,6 +87,7 @@ export function PaperApp(): JSX.Element {
   }, [sidebar]);
 
   const copy = useMemo(() => screenCopy(loc.route, loc.agentId), [loc]);
+  const Screen = SCREENS[loc.route];
   const collapsed = sidebar <= 72;
 
   return (
@@ -181,9 +183,13 @@ export function PaperApp(): JSX.Element {
             }}
           />
           <main className="paper-main">
-            <h1>{copy.title}</h1>
-            <p className="lede">{copy.lede}</p>
-            <EmptyState title="Not wired yet" description="This screen is a routed slot. Data hooks up in Phase 1." />
+            {Screen ? <Screen /> : (
+              <>
+                <h1>{copy.title}</h1>
+                <p className="lede">{copy.lede}</p>
+                <EmptyState title="Not wired yet" description="This screen is a routed slot. Data hooks up in Phase 1." />
+              </>
+            )}
           </main>
           <CommandPalette open={palette} onOpenChange={setPalette} />
           {inspector ? (
