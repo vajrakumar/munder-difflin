@@ -593,11 +593,11 @@ function CapabilitiesInner(): JSX.Element {
                 <Button size="sm" variant="secondary" onClick={() => fillBundle(false)}>{COPY.bundleFill}</Button>
                 <Button size="sm" variant="secondary" onClick={() => fillBundle(true)}>{COPY.bundleFillAll}</Button>
                 <Button size="sm" variant="ghost" onClick={() => setBundleOpen(true)}>{COPY.bundleSave}</Button>
-                <span className="pcp-matrix-count" role="status">
-                  {COPY.matrixSize(agents.length, columns.length)}
-                  {columns.length > 12 ? ` · ${COPY.matrixScroll}` : ''}
-                </span>
               </div>
+              <p className="pcp-matrix-count" role="status">
+                {COPY.matrixSize(agents.length, columns.length)}
+                {columns.length > 12 ? ` · ${COPY.matrixScroll}` : ''}
+              </p>
               <div className="pcp-matrix-wrap" tabIndex={0} aria-label={`${COPY.tabs.matrix}. ${COPY.matrixSize(agents.length, columns.length)}. ${COPY.matrixScroll}`}>
                 <table className="pcp-matrix">
                   <thead>

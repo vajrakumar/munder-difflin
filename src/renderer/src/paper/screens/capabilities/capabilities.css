@@ -190,7 +190,7 @@
 .pcp-matrix-bar > * { flex: 0 0 auto; }
 .pcp-matrix-bar .paper-input { width: 160px; }
 .pcp-matrix-count {
-  margin-inline-start: auto;
+  margin: 0;
   color: var(--paper-text-muted);
   font-size: var(--paper-text-xs);
   white-space: nowrap;
@@ -353,7 +353,6 @@
 @container screen (max-width: 720px) {
   .pcp-search .paper-input { width: 160px; }
   .pcp-matrix-bar .paper-input { width: 128px; }
-  .pcp-matrix-count { margin-inline-start: 0; }
   .pcp-matrix th:first-child,
   .pcp-matrix td:first-child { min-width: 112px; }
 }
