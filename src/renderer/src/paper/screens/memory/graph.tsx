@@ -324,19 +324,21 @@ export function MemoryGraph({
           })}
         </svg>
       )}
-      {labels.map((n) => {
-        const p = layout.get(n.id);
-        if (!p) return null;
-        return (
-          <span
-            key={n.id}
-            className="pm-node-label"
-            style={{ position: 'absolute', left: p.x + 10, top: p.y - 7, pointerEvents: 'none', fontSize: 11 }}
-          >
-            {n.label}
-          </span>
-        );
-      })}
+      <div className="pm-graph-plot" dir="ltr" aria-hidden="true">
+        {labels.map((n) => {
+          const p = layout.get(n.id);
+          if (!p) return null;
+          return (
+            <span
+              key={n.id}
+              className="pm-node-label"
+              style={{ insetInlineStart: p.x + 10, insetBlockStart: p.y - 7 }}
+            >
+              {n.label}
+            </span>
+          );
+        })}
+      </div>
       {hover ? (
         <div className="paper-hover-card pm-hover" style={{ left: hover.x, top: hover.y }}>
           <NodeTip node={hover.node} />
