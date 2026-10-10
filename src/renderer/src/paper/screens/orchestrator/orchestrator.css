@@ -1,0 +1,165 @@
+/* Orchestrator extras (MDF-14) inside the agent room side pane. */
+
+.po-empty, .po-lede {
+  margin: 0 0 10px;
+  color: var(--paper-text-muted);
+  font-size: var(--paper-text-sm);
+}
+.po-lede a { color: var(--paper-accent-11); }
+
+.po-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.po-log-item {
+  padding: 8px 10px;
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-md);
+  background: var(--paper-surface);
+}
+.po-log-item[data-dir="out"] { border-inline-start: 3px solid var(--paper-accent-9); }
+.po-log-item[data-dir="in"] { border-inline-start: 3px solid var(--paper-neutral-8); }
+.po-log-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.po-log-who { font-size: var(--paper-text-sm); font-weight: var(--paper-weight-medium); }
+.po-log-subject {
+  margin: 4px 0 0;
+  font-size: var(--paper-text-sm);
+  color: var(--paper-text);
+}
+
+.po-board {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  flex: 1;
+  height: 100%;
+}
+.po-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+.po-col {
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-md);
+  background: var(--paper-neutral-2);
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.po-col-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: var(--paper-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--paper-text-muted);
+}
+.po-col-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+}
+.po-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--paper-radius-sm);
+  background: var(--paper-surface);
+  border: 1px solid var(--paper-border);
+  text-decoration: none;
+  color: inherit;
+}
+.po-card:hover { border-color: var(--paper-border-strong); }
+.po-card-title {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.po-control { display: flex; flex-direction: column; gap: 18px; }
+.po-section h3 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: var(--paper-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--paper-text-muted);
+}
+.po-breaker { display: flex; flex-wrap: wrap; gap: 6px; }
+.po-lede[data-tone="warning"] { color: var(--paper-warning-11, var(--paper-text)); }
+.po-lede[data-tone="danger"] { color: var(--paper-danger-11); }
+
+.po-fleet { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.po-fleet-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 88px) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.po-fleet-name {
+  font-size: var(--paper-text-sm);
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.po-fleet-name:hover { color: var(--paper-accent-11); }
+.po-meter {
+  display: block;
+  height: 8px;
+  border-radius: var(--paper-radius-full);
+  background: var(--paper-neutral-4);
+  overflow: hidden;
+}
+.po-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--paper-accent-9);
+  border-radius: inherit;
+}
+
+.po-dl { margin: 0 0 10px; }
+.po-dl > div {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 8px;
+  padding: 4px 0;
+  font-size: var(--paper-text-sm);
+}
+.po-dl dt { margin: 0; color: var(--paper-text-muted); }
+.po-dl dd { margin: 0; }
+.po-note {
+  margin: 8px 0 0;
+  font-size: var(--paper-text-sm);
+  color: var(--paper-accent-11);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .po-meter > span { transition: none; }
+}

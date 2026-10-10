@@ -287,7 +287,7 @@ export function Sidebar({
                     <AgentRow
                       key={a.id}
                       agent={a}
-                      current={loc.route === 'agent' && loc.agentId === a.id}
+                      current={!!loc.agentId && loc.agentId === a.id && (loc.route === 'agent' || loc.route === 'orchestrator')}
                       collapsed={collapsed}
                       dragging={draggingId === a.id}
                       onNudge={nudge}
