@@ -643,3 +643,166 @@ Tester (`tester-mv2fnyz5`) · 2026-10-10 · browser only · god inform conv-72fd
 Left open (not in MDF-49): **B-16-5** board status change is pointer-only.
 
 No P1 reopened on the Tasks board.
+
+---
+
+## MDF-18 Memory (paper.html#/memory)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-2881a2.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** at `http://127.0.0.1:5183/paper.html#/memory` (`c114c078` merge; HEAD of the clone at QA time `641a49d9`, ancestor of the Memory merge). Developer gallery :5179 left running. Evidence `/tmp/mdf18-qa/`. Chrome CDP 9340. First load of the already-open tab was a stale “Not wired yet” slot; `Page.reload({ignoreCache:true})` mounted `.pm-root`.
+
+Demo: `memorySource()` (no `window.cth`), `recent()` **8** of 10 notes, palace **minilm**. Headless Chrome used the **SVG** graph fallback (no WebGL context); that is the designed fallback, not a product miss.
+
+### What passed
+
+- Cards / List / Graph / Knowledge `role="tablist"` `aria-label="Memory view"`, `aria-selected` tracks the tab. Keys **1 / 2 / 3** switch Cards / List / Graph.
+- **/** focuses `aria-label="Search memory by meaning"`. Nonsense `zzzz-no-such-memory` → EmptyState **No results** + five suggestion chips. Chip **release checklist** → **4** hits (3 memory + SPEC.md knowledge). Source **Knowledge** → 1 card. Agent **Phyllis** → 1 card.
+- Cards: 8, `role="button"` `tabIndex=0`, first `aria-current="true"`. **j / k / Enter** opened the Developer Electron-upgrade sheet. **Open file** toast **Gallery cannot open files**. **r** toast **Reflected 0 of 4 notes**. Close (X) dismisses the sheet.
+- Graph: `role="img"` with a 9-node / 12-link label, legend `aria-hidden`, SR list of 9 buttons (**Agent Michael** … **Topic Release checklist**) exposed in the AX tree. Agent chips + topic chip filter. SVG fallback painted clusters and labels.
+- Knowledge: SPEC.md + MEMORY_GRAPH_SPEC.md; **Add files** injects onboarding-notes.md; **Remove** drops a row and toasts.
+- Dark / hc paint. Search icon uses `inset-inline-start`. Focus ring on sheet **Open file** matches `--paper-focus-ring`. 1024×640: tabs, search, chips and footer stay in view; cards scroll. 0 unnamed chrome buttons. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-18-1 · Graph topic **memory.md** filters to an empty board
+
+**Flow:** Memory → Graph → pick a topic (SR button or node).  
+**Steps:**
+1. Open `#/memory`, press **3**.
+2. Activate **Topic memory.md** (first topic in the SR list; `graphFromHits` prefixes every hit with `## ${h.file}` so `extractTopics` treats the filename as a topic).
+3. `hitMentions` then keeps hits whose **body** contains `memory.md`.
+
+**Expected:** the topic matches the notes that produced it, or the filename is not a topic.  
+**Actual:** lede **0 results**, empty copy **No memories yet** / “Search by meaning, or wait for agents to write notes.” Chip **Topic: memory.md ×**. Screenshot `25-topic-filter.png`. Real topics that appear in the body (**Electron upgrade**, **Release checklist**) would match; the graph still leads with a dead filename topic.
+
+**Severity: P1** (Graph is a headline view of this card; the first topic action empties the board).
+
+### P2
+
+### B-18-2 · List rows are not in the tab order
+
+**Flow:** Memory → List.  
+**Expected:** like Tasks, every `tbody tr` is keyboard-activatable (`tabIndex=0`) or the row is not a click target.  
+**Actual:** 8 rows, `onClick` opens the sheet, `tabIndex` **-1**, no `role`. Window **j / k / Enter** still move/open. Screenshot `02-list.png`.
+
+**Severity: P2** (a11y)
+
+### B-18-3 · Knowledge **Remove** is the same name on every row
+
+**Flow:** Memory → Knowledge.  
+**Expected:** each danger control names the document (WCAG 2.4.6 / 2.5.3).  
+**Actual:** two (then three) buttons whose accessible name is **Remove**; `aria-label` and `title` null; last `<TH>` is empty. Screenshot `04-knowledge.png`.
+
+**Severity: P2** (a11y)
+
+### B-18-4 · Knowledge has no digit shortcut
+
+**Flow:** keyboard. Footer documents **1 2 3** views.  
+**Expected:** a key for the fourth tab, or Knowledge is not a peer tab.  
+**Actual:** **4** leaves Knowledge selected. Mouse (or tab) is required. Digit-4 probe logged `AFTER_DIGIT4` still on Knowledge.
+
+**Severity: P2**
+
+### B-18-5 · Graph node labels use physical `left` / `top`
+
+**Flow:** `dir=rtl` on `#/memory` Graph.  
+**Expected:** `memory.css` comment — logical properties for RTL.  
+**Actual:** `.pm-node-label` is `style={{ left: p.x + 10, top: p.y - 7 }}`. Legend uses `inset-inline-start` and flips; labels stay LTR. Search field padding is logical (`padding-inline-start: 28px`). Screenshot `18-rtl-graph.png`.
+
+**Severity: P2** (RTL)
+
+### B-18-6 · Chip / legend / node type is **11px**
+
+**Flow:** Memory chrome vs DESIGN.md six-step scale (xs = 12). MDF-46 skipped `screens/memory`.  
+**Actual:** `.pm-chip-label`, `.pm-card-meta`, `.pm-graph-legend`, `.pm-node-label` are `font-size: 11px`. Computed chip **11px**, `--paper-text-xs` **12px**. Footer is 12px.
+
+**Severity: P2**
+
+### B-18-7 · Topic filter uses the empty-roster copy
+
+**Flow:** after B-18-1. `searching` is `query.trim().length > 0`.  
+**Expected:** a filtered-empty state (**No results** / clear topic).  
+**Actual:** title **No memories yet** because the query string is still empty. Screenshot `25-topic-filter.png`.
+
+**Severity: P2**
+
+### B-18-8 · RTL sheet body leads with a period
+
+**Flow:** `dir=rtl`, open a memory sheet.  
+**Expected:** “Rebuilt native modules after the Electron upgrade…” stays readable.  
+**Actual:** RichText bullet paints **“.node-pty needed @electron/rebuild 4”**. Screenshot `18-rtl-graph.png` (sheet still open). Same class of bug as B-14-6.
+
+**Severity: P2** (RTL)
+
+### B-18-9 · Demo **recent()** hides two of ten notes
+
+**Flow:** `#/memory` with empty search.  
+**Expected:** Cards / List / Graph agree on the demo floor, or the lede says it is a slice.  
+**Actual:** `DEMO_MEMORY` has 10 sections; `recent()` is `rankHits(memHits()).slice(0, 8)`. Lede **8 results**. Live `recent()` slices 18.
+
+**Severity: P2**
+
+### B-18-10 · Sheet title is the filename, not the note
+
+**Flow:** **Enter** on a card.  
+**Expected:** the heading the person just read (e.g. “Electron upgrade”).  
+**Actual:** Radix title **memory.md** for every memory hit. Screenshot `12-sheet.png`.
+
+**Severity: P2**
+
+### MDF-18 counts
+
+- P0: 0
+- P1: 1 (filename topic empties Graph)
+- P2: 8
+- Electron: not launched
+
+---
+
+## MDF-46 design QA 1 (spot-check)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-05ca89.
+
+Browser only. Gallery from the **main clone** `http://127.0.0.1:5183/paper.html` (merge `dbd53791` / `dd597dda`; HEAD `641a49d9`). 1440×900 and 1024×640, light and dark. Evidence `/tmp/mdf46-qa/`. Electron not launched. Developer :5179 left running.
+
+Toby’s P1 1–8 and P2 9–18 in `specs/design-qa-1.md`. P3 skipped.
+
+### P1 re-check
+
+| # | Claim | Result |
+| --- | --- | --- |
+| 1 | Theme default system; menu System/Light/Dark/HC | **Verified.** `aria-label="Theme (system)"`, menu **System / Light / Dark / High contrast**. Choosing Dark sets `data-paper-theme=dark`. Screenshots `02-theme-menu.png`, `03-home-1440-dark.png`. |
+| 2 | Inbox hides Inspector; title can use the pane | **Verified.** Inbox default **Show inspector**, dock width 0. Detail ~614px at 1440. Title “Can I test on your device after MDF-11?” on one line. `04-inbox-1440-light.png`. |
+| 3 | ≤1100 Inspector is a Sheet; Inbox <840 is list→detail push | **Mostly verified.** At 1024×640 Inspector stays closed. Inbox is list-first (detail width 0, icon rail). Did not click through the push. `08-inbox-1024-light.png`. |
+| 4 | Window j/k/e/r/Enter; focus `.pi-rows` | **Verified.** Two **j**s moved Needs-you from Tester’s MDF-11 thread to Michael’s token-budget thread; detail followed. `05-inbox-jk.png`. |
+| 5 | Danger only for needs-you; Question neutral | **Verified.** **Needs reply** danger chip; **Question** neutral; unread is a single accent dot; sidebar **asked** pill danger. |
+| 6 | Raw px type → `--paper-text-*` | **Verified** on shell/inbox (no 11px in the shell dump). Memory still has 11px (B-18-6; MDF-46 skipped that screen). |
+| 7 | `--paper-focus-ring` on the list | **Verified.** `.pi-rows:focus` `box-shadow` matches `--paper-focus-ring`. `06-inbox-focus.png`. |
+| 8 | Notes collapsible; agents min 4 rows | **Verified at 1440×900.** All five agents including Dwight are in the rail (`12-sidebar-1440.png`). At **1024×640** Dwight’s row sits below the sidebar (`y=695`, sidebar height 595) and clips. |
+
+### P2 spot-check (claimed fixed)
+
+Title bar has **$2.65 today**, Voice, Account; Classic UI is out of the bar (account menu). Inbox folder rail is labelled at 1440. Thread cards start with the body. ⌘K palette has icons, **G I** shortcuts, footer “↑↓ to move · ↵ to run · esc to close”. Notes is a collapsible block with a chevron.
+
+### P2 leftover
+
+### B-46-1 · Dwight still clips at 1024×640
+
+**Flow:** min window 1024×640, Home or Inbox.  
+**Expected:** P1 #8 — agents keep a minimum of four readable rows; the fifth can scroll.  
+**Actual:** Michael and Phyllis are visible; Developer / Tester / Dwight sit below `.paper-sidebar` (`clip: true`). Screenshot `08-inbox-1024-light.png`, `10-home-1024-light.png`. At 1440×900 Dwight’s status ring kisses the Notes splitter (`12-sidebar-1440.png`).
+
+**Severity: P2** (the 900px crush is gone; the min window still hides the tail of the roster).
+
+### MDF-46 counts
+
+- P0: 0
+- P1: 0 reopened
+- P2: 1 leftover (Dwight at 1024×640)
+- Electron: not launched
+
