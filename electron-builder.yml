@@ -1,15 +1,24 @@
-appId: in.munderdiffl.app
-productName: Munder Difflin
+# Fork identity (MDF-4). appId, productName, the URL scheme and artifact names
+# all differ from upstream so this build installs BESIDE
+# /Applications/Munder Difflin.app. Runtime half: src/shared/forkIdentity.ts.
+# productName is a placeholder until the rebrand question (MDF-35) is answered.
+appId: in.munderdiffl.app.fork
+productName: Munder Difflin Fork
 copyright: Copyright © 2026 Chaitanya Giri
 
 # Where electron-updater looks for new versions (latest*.yml + assets on GitHub
 # releases). The release workflow still uploads assets itself (--publish never);
 # this block only stamps app-update.yml into the packaged app so the updater
 # knows which repo to poll.
-publish:
-  provider: github
-  owner: chaitanyagiri
-  repo: munder-difflin
+#
+# Fork: no feed. Upstream's feed serves upstream builds, which would replace the
+# fork in place. The updater is also switched off in forkIdentity.ts.
+publish: null
+
+# Packaged package.json name = Electron's default app name. Upstream's is
+# `munder-difflin`; forkIdentity.ts pins userData too, this is belt and braces.
+extraMetadata:
+  name: munder-difflin-fork
 
 # Bake the update toast's "What's new" list straight into latest*.yml.
 #
@@ -38,9 +47,9 @@ afterSign: build/notarize.cjs
 # Register the munderdifflin:// URL scheme (shareable-hires deep link) in the
 # packaged app: CFBundleURLTypes on macOS, registry entries via NSIS on Windows.
 protocols:
-  - name: Munder Difflin
+  - name: Munder Difflin Fork
     schemes:
-      - munderdifflin
+      - munderdifflin-fork
 
 # electron-vite emits the app into out/; package exactly that plus what the
 # runtime needs. node-pty is native, so keep it out of the asar.
@@ -130,10 +139,10 @@ mac:
       arch: [universal]
     - target: zip
       arch: [universal]
-  artifactName: Munder-Difflin-${version}-mac-${arch}.${ext}
+  artifactName: Munder-Difflin-Fork-${version}-mac-${arch}.${ext}
 
 dmg:
-  title: Munder Difflin ${version}
+  title: Munder Difflin Fork ${version}
 
 # ---- Windows ----
 win:
@@ -148,11 +157,11 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  artifactName: Munder-Difflin-${version}-win-x64-setup.exe
-  shortcutName: Munder Difflin
+  artifactName: Munder-Difflin-Fork-${version}-win-x64-setup.exe
+  shortcutName: Munder Difflin Fork
 
 portable:
-  artifactName: Munder-Difflin-${version}-win-x64-portable.exe
+  artifactName: Munder-Difflin-Fork-${version}-win-x64-portable.exe
 
 # ---- Linux ----
 linux:
@@ -161,4 +170,4 @@ linux:
   target:
     - target: AppImage
       arch: [x64]
-  artifactName: Munder-Difflin-${version}-linux-x86_64.AppImage
+  artifactName: Munder-Difflin-Fork-${version}-linux-x86_64.AppImage

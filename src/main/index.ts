@@ -69,6 +69,7 @@ import { inboxNudgeText } from '../shared/hiveNudge';
 import { resolveGodName } from '../shared/godIdentity';
 import { fetchHireManifest, readHireManifestFiles } from './hire';
 import { parseHireDeepLink, type HireManifest } from '../shared/hire';
+import { USER_DATA_DIR_NAME, DEEP_LINK_SCHEME } from '../shared/forkIdentity';
 import { ClosingTimeController } from './closingTime';
 import {
   argsWithAutoModeFlag,
@@ -92,6 +93,13 @@ import {
   codexRemoteSocketFits,
   withCodexRemoteArgs
 } from '../shared/codexRemote';
+
+// Fork identity (MDF-4): own userData folder so config, harness.db and the
+// single-instance lock never touch an installed upstream Munder Difflin. An
+// explicit --user-data-dir (the isolated dev command) still wins.
+if (!app.commandLine.hasSwitch('user-data-dir')) {
+  app.setPath('userData', join(app.getPath('appData'), USER_DATA_DIR_NAME));
+}
 
 const isDev = !!process.env.ELECTRON_RENDERER_URL;
 
@@ -2238,10 +2246,10 @@ async function handleHireLink(link: string): Promise<void> {
 // exe+args form or the registration points at electron.exe with no entry.
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('munderdifflin', process.execPath, [resolve(process.argv[1])]);
+    app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME, process.execPath, [resolve(process.argv[1])]);
   }
 } else {
-  app.setAsDefaultProtocolClient('munderdifflin');
+  app.setAsDefaultProtocolClient(DEEP_LINK_SCHEME);
 }
 
 // Deep links on Windows/Linux arrive as the argv of a SECOND process — take the
@@ -2258,7 +2266,7 @@ if (!gotInstanceLock) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
     }
-    const link = argv.find((a) => a.startsWith('munderdifflin://'));
+    const link = argv.find((a) => a.startsWith(`${DEEP_LINK_SCHEME}://`));
     if (link) void handleHireLink(link);
   });
 }
@@ -5397,7 +5405,7 @@ app.whenReady().then(() => {
   void loadModelCatalog(MODEL_CATALOG_CACHE()).catch(() => { /* never fatal */ });
 
   // A cold-start deep link (Windows/Linux) rides in on OUR argv.
-  const startupHireLink = process.argv.find((a) => a.startsWith('munderdifflin://'));
+  const startupHireLink = process.argv.find((a) => a.startsWith(`${DEEP_LINK_SCHEME}://`));
   if (startupHireLink) void handleHireLink(startupHireLink);
 
   // Hand every spawned agent the path to the Slack reply discovery file via the

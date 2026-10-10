@@ -21,6 +21,7 @@
  *     auto-enabled (consistent with "import only pre-fills; human clicks spawn").
  */
 
+import { DEEP_LINK_SCHEME } from './forkIdentity';
 import { mcpCatalogEntry } from './mcpCatalog';
 import { MAX_AGENT_TOKEN_CAP } from './tokenCaps';
 
@@ -322,7 +323,7 @@ export function validateHireManifest(raw: unknown): HireValidation {
 export function parseHireDeepLink(link: string): string | null {
   let u: URL;
   try { u = new URL(link); } catch { return null; }
-  if (u.protocol !== 'munderdifflin:') return null;
+  if (u.protocol !== `${DEEP_LINK_SCHEME}:`) return null;
   // Both munderdifflin://hire?src= (host) and munderdifflin:hire?src= (path).
   const action = (u.host || u.pathname.replace(/^\/+/, '')).toLowerCase();
   if (action !== 'hire') return null;

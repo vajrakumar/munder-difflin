@@ -4,6 +4,7 @@ import { request as httpsRequest } from 'node:https';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readConfig } from './config';
+import { AUTO_UPDATE_ENABLED } from '../shared/forkIdentity';
 import { DEFAULT_DROP_HTML } from '../shared/releaseDrop';
 import { reduceStatus, clampPercent, isNewer, installerUrl, shouldShowReleaseDrop, type UpdateStatus } from '../shared/updateState';
 
@@ -394,10 +395,12 @@ export function initAutoUpdater(getWebContents: () => WebContents | null): void 
   });
   ipcMain.handle('update:checkNow', async () => {
     if (!app.isPackaged) return { ok: false, error: 'dev build — updates are only checked in packaged apps' };
+    if (!AUTO_UPDATE_ENABLED) return { ok: false, error: 'fork build — updates are off (see RELEASING.md)' };
     return runCheck();
   });
   ipcMain.handle('update:download', async () => {
     if (!app.isPackaged) return { ok: false, error: 'dev build — updates are only downloaded in packaged apps' };
+    if (!AUTO_UPDATE_ENABLED) return { ok: false, error: 'fork build — updates are off (see RELEASING.md)' };
     return runDownload();
   });
   /** Re-serve the last known status to a freshly loaded window. */
@@ -504,7 +507,7 @@ export function initAutoUpdater(getWebContents: () => WebContents | null): void 
     return { ok: true };
   });
 
-  if (!app.isPackaged) return;
+  if (!app.isPackaged || !AUTO_UPDATE_ENABLED) return;
   if (started) return;
   started = true;
 
