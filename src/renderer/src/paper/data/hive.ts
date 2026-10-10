@@ -14,6 +14,7 @@ import {
   parseMail, parseTasks, openQuestion,
   type PaperAgent, type PaperMail, type PaperTask, type QA, type TaskPriority, type TaskStatus
 } from './model';
+import { applyArchive, applyDelete, applyReopen, applyStop, isGod } from '../screens/archived/model';
 
 export type FloorMode = 'live' | 'demo';
 
@@ -75,7 +76,8 @@ async function loadLive(): Promise<void> {
       role: a.role,
       isGod: a.isGod || a.id === reg.godId,
       archived: a.archived,
-      status: statusFrom(a.status, a.archived)
+      status: statusFrom(a.status, a.archived),
+      stopped: a.archived ? true : undefined
     }));
     const seen = new Set<string>();
     const mail: PaperMail[] = [];
@@ -236,3 +238,72 @@ export function dismissQuestion(task: PaperTask): Promise<boolean> {
 }
 
 export const HUMAN_ID = HUMAN;
+
+function findAgent(id: string): PaperAgent | undefined {
+  return snapshot.agents.find((a) => a.id === id);
+}
+
+async function liveSetArchived(id: string, archived: boolean): Promise<boolean> {
+  const cth = bridge();
+  if (!cth || typeof cth.hiveSetArchived !== 'function') return true;
+  try {
+    const res = await cth.hiveSetArchived(id, archived);
+    if (res.ok) void loadLive();
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** End the process; keep memory, inbox, worktree and the sidebar row. */
+export async function stopAgent(id: string): Promise<boolean> {
+  const agent = findAgent(id);
+  if (!agent || isGod(agent)) return false;
+  const prev = snapshot.agents;
+  emit({ agents: applyStop(prev, id) });
+  return true;
+}
+
+/** Stop and hide from the sidebar. Reopen from `/agents/archived`. */
+export async function archiveAgent(id: string): Promise<boolean> {
+  const agent = findAgent(id);
+  if (!agent || isGod(agent)) return false;
+  const prev = snapshot.agents;
+  emit({ agents: applyArchive(prev, id, snapshot.tasks) });
+  const ok = await liveSetArchived(id, true);
+  if (!ok) emit({ agents: prev });
+  return ok;
+}
+
+/** Bring the same id, worktree and inbox back onto the floor. */
+export async function reopenAgent(id: string, freshWorktree = false): Promise<boolean> {
+  const agent = findAgent(id);
+  if (!agent) return false;
+  const prev = snapshot.agents;
+  emit({ agents: applyReopen(prev, id, freshWorktree) });
+  const ok = await liveSetArchived(id, false);
+  if (!ok) emit({ agents: prev });
+  return ok;
+}
+
+/** Permanently drop the agent folder (after the name-typed confirm). */
+export async function deleteAgent(id: string): Promise<boolean> {
+  const agent = findAgent(id);
+  if (!agent || isGod(agent)) return false;
+  const prev = snapshot.agents;
+  emit({ agents: applyDelete(prev, id) });
+  const cth = bridge() as { hiveDeleteAgent?: (id: string) => Promise<{ ok: boolean }> } | undefined;
+  if (cth && typeof cth.hiveDeleteAgent === 'function') {
+    try {
+      const res = await cth.hiveDeleteAgent(id);
+      if (!res.ok) {
+        emit({ agents: prev });
+        return false;
+      }
+    } catch {
+      emit({ agents: prev });
+      return false;
+    }
+  }
+  return true;
+}

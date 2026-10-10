@@ -24,6 +24,16 @@ export interface PaperAgent {
   status: StatusName;
   isGod?: boolean;
   archived?: boolean;
+  /** ISO instant the agent was archived. Demo-only unless the registry carries it. */
+  archivedAt?: string;
+  lastTaskKey?: string;
+  lastTaskTitle?: string;
+  /** Human disk use, e.g. `42 MB`. Unknown in live until hive:deleteAgent lands. */
+  diskUsed?: string;
+  /** True when the worktree folder is gone; Reopen offers a fresh worktree. */
+  worktreeMissing?: boolean;
+  /** Stop ended the process; the agent stays in the sidebar. */
+  stopped?: boolean;
 }
 
 export interface PaperTask {
