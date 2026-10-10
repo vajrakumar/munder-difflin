@@ -73,6 +73,7 @@ function Gallery(): JSX.Element {
             key={t}
             size="sm"
             variant={theme === t ? 'primary' : 'secondary'}
+            aria-pressed={theme === t}
             onClick={() => setT(t)}
             style={{ marginInlineEnd: 6 }}
           >
@@ -106,6 +107,7 @@ function Gallery(): JSX.Element {
           <Select
             value={engine}
             onValueChange={setEngine}
+            aria-label="Engine"
             options={[
               { value: 'claude', label: 'Claude' },
               { value: 'grok', label: 'Grok' },
@@ -115,6 +117,7 @@ function Gallery(): JSX.Element {
           <Combobox
             value={agent}
             onChange={setAgent}
+            aria-label="Agent"
             options={[
               { value: 'god', label: 'Michael' },
               { value: 'dev', label: 'Developer' },

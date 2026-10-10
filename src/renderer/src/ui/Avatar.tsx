@@ -54,6 +54,8 @@ export function StatusRing({
       className={cx('paper-status-ring', className)}
       data-status={status}
       title={status}
+      role="img"
+      aria-label={status}
     >
       {children}
     </span>

@@ -46,7 +46,13 @@ export function CommandPalette({
 
   return (
     <div className="paper-palette-root">
-      <button type="button" className="paper-overlay" aria-label="Close palette" onClick={() => onOpenChange(false)} />
+      <button
+        type="button"
+        className="paper-overlay"
+        tabIndex={-1}
+        aria-label="Close palette"
+        onClick={() => onOpenChange(false)}
+      />
       <div
         className="paper-palette"
         role="dialog"
@@ -54,6 +60,10 @@ export function CommandPalette({
         aria-label="Command palette"
         onKeyDown={(e) => {
           if (e.key === 'Escape') { e.preventDefault(); onOpenChange(false); }
+          if (e.key === 'Tab') {
+            e.preventDefault();
+            input.current?.focus();
+          }
           if (e.key === 'ArrowDown') { e.preventDefault(); setActive((i) => Math.min(shown.length - 1, i + 1)); }
           if (e.key === 'ArrowUp') { e.preventDefault(); setActive((i) => Math.max(0, i - 1)); }
           if (e.key === 'Enter') {
@@ -67,15 +77,20 @@ export function CommandPalette({
           ref={input}
           className="paper-palette-input"
           placeholder="Search or jump…"
+          aria-label="Search or jump"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="paper-palette-list"
+          aria-activedescendant={shown[active] ? `paper-pal-${shown[active].id}` : undefined}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <div className="paper-palette-list">
+        <div id="paper-palette-list" className="paper-palette-list" role="listbox">
           {shown.length === 0 ? (
             <div className="paper-palette-empty">No matching actions</div>
           ) : (
             groups.map((g) => (
-              <div key={g.name}>
+              <div key={g.name} role="group" aria-label={g.name}>
                 <div className="paper-palette-group">{g.name}</div>
                 {g.items.map((a) => {
                   index += 1;
@@ -83,7 +98,11 @@ export function CommandPalette({
                   return (
                     <button
                       key={a.id}
+                      id={`paper-pal-${a.id}`}
                       type="button"
+                      role="option"
+                      aria-selected={i === active}
+                      tabIndex={-1}
                       className="paper-palette-item"
                       data-active={i === active ? 'true' : undefined}
                       onMouseEnter={() => setActive(i)}

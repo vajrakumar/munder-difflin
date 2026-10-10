@@ -16,7 +16,7 @@ function go(route: PaperRoute, agentId?: string): void {
 
 const NAV_ACTIONS: PaperAction[] = (
   [
-    ['home', 'Go to Home', 'home inbox floor'],
+    ['home', 'Go to Home', 'home floor'],
     ['inbox', 'Go to Inbox', 'ask me mail slack'],
     ['tasks', 'Go to Tasks', 'board tickets kanban'],
     ['automations', 'Go to Automations', 'schedule webhook cron'],
