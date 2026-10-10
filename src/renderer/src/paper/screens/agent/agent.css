@@ -97,6 +97,26 @@
   overflow: hidden;
   border-inline-end: 1px solid var(--paper-border);
 }
+.pa-ide-bar, .pa-term-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 10px;
+  font-size: var(--paper-text-xs);
+  font-weight: var(--paper-weight-medium);
+  color: var(--paper-text-muted);
+  border-block-end: 1px solid var(--paper-border);
+  background: var(--paper-bg-subtle);
+}
+.pa-ide-hint {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: var(--paper-text-xs);
+  color: var(--paper-text-muted);
+  border-block-end: 1px solid var(--paper-border);
+}
 .pa-term-host {
   flex: 1;
   min-height: 0;

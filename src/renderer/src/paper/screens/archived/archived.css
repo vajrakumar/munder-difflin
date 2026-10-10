@@ -1,0 +1,132 @@
+/* Archived agents (MDF-22). Paper tokens only; logical properties for RTL. */
+
+.par-root {
+  padding: 16px 20px 20px;
+  overflow: hidden;
+  gap: 16px;
+  background: var(--paper-bg);
+  min-height: 0;
+}
+
+.par-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.par-toolbar h1 {
+  margin: 0;
+  font-size: var(--paper-text-xl);
+  letter-spacing: -0.02em;
+  line-height: var(--paper-leading-xl);
+}
+.par-lede {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: var(--paper-text-muted);
+  font-size: var(--paper-text-sm);
+}
+.par-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.par-search svg {
+  position: absolute;
+  inset-inline-start: 10px;
+  color: var(--paper-text-muted);
+  pointer-events: none;
+}
+.par-search .paper-input { padding-inline-start: 28px; width: 220px; }
+
+.par-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-lg);
+  background: var(--paper-surface);
+}
+.par-root .paper-table { width: 100%; border-collapse: collapse; }
+.par-root .paper-table th {
+  text-align: start;
+  font-size: var(--paper-text-xs);
+  font-weight: var(--paper-weight-medium);
+  color: var(--paper-text-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--paper-border);
+  background: var(--paper-bg-subtle);
+  position: sticky;
+  top: 0;
+}
+.par-root .paper-table td {
+  padding: 10px 12px;
+  border-block-end: 1px solid var(--paper-border);
+  vertical-align: middle;
+  font-size: var(--paper-text-sm);
+}
+.par-root .paper-table tr[data-selected="true"] td {
+  background: var(--paper-accent-3);
+}
+.par-root .paper-table tbody tr { cursor: pointer; }
+.par-root .paper-table tbody tr:hover td { background: var(--paper-neutral-3); }
+.par-root .paper-table tbody tr[data-selected="true"]:hover td { background: var(--paper-accent-3); }
+
+.par-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.par-name-copy { min-width: 0; }
+.par-name-copy strong {
+  display: block;
+  font-weight: var(--paper-weight-medium);
+}
+.par-role { color: var(--paper-text-muted); font-size: var(--paper-text-xs); }
+.par-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.par-warn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--paper-danger-11);
+  font-size: var(--paper-text-xs);
+}
+.par-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--paper-text-muted);
+  font-size: var(--paper-text-xs);
+}
+.par-keys kbd { margin-inline-start: 4px; }
+
+.par-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.par-dialog-input { width: 100%; margin-top: 8px; }
+
+.par-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+.par-skel .paper-skel { height: 36px; border-radius: var(--paper-radius-md); }

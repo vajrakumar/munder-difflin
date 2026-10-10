@@ -10,7 +10,8 @@ export type PaperRoute =
   | 'stapler'
   | 'notes'
   | 'agent'
-  | 'orchestrator';
+  | 'orchestrator'
+  | 'archived';
 
 export type PaperLocation = {
   route: PaperRoute;
@@ -34,6 +35,7 @@ export function parseHash(hash: string): PaperLocation {
   const raw = hash.replace(/^#\/?/, '');
   const [head, rest] = raw.split('/');
   if (head === 'orchestrator') return { route: 'orchestrator', agentId: 'god' };
+  if ((head === 'agents' && rest === 'archived') || head === 'archived') return { route: 'archived' };
   if (head === 'agent' && rest) return { route: 'agent', agentId: rest };
   if (head === 'notes' && rest) return { route: 'notes', noteId: rest };
   if (head === 'tasks' && rest) return { route: 'tasks', taskId: decodeURIComponent(rest) };
@@ -43,12 +45,14 @@ export function parseHash(hash: string): PaperLocation {
   ids.add('notes');
   ids.add('orchestrator');
   ids.add('connections');
+  ids.add('archived');
   if (head && ids.has(head as PaperRoute)) return { route: head as PaperRoute };
   return { route: 'home' };
 }
 
 export function hrefFor(route: PaperRoute, id?: string): string {
   if (route === 'orchestrator' || (route === 'agent' && id === 'god')) return '#/orchestrator';
+  if (route === 'archived') return '#/agents/archived';
   if (route === 'agent' && id) return `#/agent/${id}`;
   if (route === 'notes' && id) return `#/notes/${id}`;
   if (route === 'tasks' && id) return `#/tasks/${encodeURIComponent(id)}`;

@@ -6,7 +6,7 @@
  *  and the composer queues into the agent's prompt like the classic composer.
  *  Demo (gallery): a static xterm and the composer posts to the floor mail. */
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
-import { ImagePlus, Paperclip, Send, SquareTerminal, X } from 'lucide-react';
+import { Code2, ImagePlus, Paperclip, Send, SquareTerminal, X } from 'lucide-react';
 import {
   Avatar, Badge, Button, EmptyState, IconButton, StatusRing, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, type BadgeTone
 } from '@/ui';
@@ -14,8 +14,11 @@ import { useStore } from '@/store/store';
 import { PtyTerminalView } from '@/components/PtyTerminalView';
 import { TerminalView } from '@/components/TerminalView';
 import { isComposingKey } from '@shared/imeGuard';
+import { AgentOverflowMenu } from '../../AgentLifecycle';
 import { RichText } from '../../common/RichText';
 import { agentName, sendMail, useFloor } from '../../data/hive';
+import { DetachButton, Detachable } from '../../Detachable';
+import { copyFor, currentLang } from '../archived/copy';
 import { isHuman, type PaperTask, type TaskStatus } from '../../data/model';
 import { fullStamp, relative } from '../../data/time';
 import { DEFAULT_AGENTS } from '../../demoData';
@@ -72,6 +75,7 @@ export function AgentRoom({ agentId: id, extraTabs = [] }: { agentId?: string; e
   const mail = useMemo(() => (id ? mailFor(floor.mail, id) : []), [floor.mail, id]);
   const tasks = useMemo(() => (id ? tasksFor(floor.tasks, id) : []), [floor.tasks, id]);
   const current = tasks.find((t) => t.status === 'doing') ?? tasks.find((t) => t.status === 'blocked');
+  const t = copyFor(currentLang());
 
   if (!id || (floor.loaded && !fa && !live && !rail)) {
     return (
@@ -94,23 +98,45 @@ export function AgentRoom({ agentId: id, extraTabs = [] }: { agentId?: string; e
         {current ? <Badge tone="accent">{current.key}</Badge> : null}
         <span className="pa-head-spacer" />
         {info.model ? <span className="pc-key">{info.model}</span> : null}
+        {id ? (
+          <AgentOverflowMenu
+            agent={{ id, name, isGod: fa?.isGod || id === 'god', archived: fa?.archived, stopped: fa?.stopped }}
+          />
+        ) : null}
       </header>
 
       <div className="pa-body">
         <section className="pa-term" aria-label={`${name} terminal`}>
-          <div className="pa-term-host">
-            {live?.ptyId ? (
-              <PtyTerminalView key={live.ptyId} ptyId={live.ptyId} embedded />
-            ) : floor.mode === 'demo' ? (
-              <TerminalView key={id} initialLines={demoTerminal(name, rail?.line)} />
-            ) : (
-              <EmptyState
-                icon={<SquareTerminal size={20} />}
-                title="No terminal"
-                description={`${name} has no live session in this window.`}
-              />
-            )}
+          <div className="pa-ide-bar">
+            <Code2 size={14} aria-hidden />
+            <span>{t.ide}</span>
+            <span className="pa-head-spacer" />
+            <DetachButton target={{ view: 'ide', agentId: id }} label={t.detachIde} />
           </div>
+          <Detachable target={{ view: 'ide', agentId: id }}>
+            <p className="pa-ide-hint">{t.sameSession}</p>
+          </Detachable>
+          <div className="pa-term-bar">
+            <SquareTerminal size={14} aria-hidden />
+            <span>{t.terminal}</span>
+            <span className="pa-head-spacer" />
+            <DetachButton target={{ view: 'terminal', agentId: id }} label={t.detachTerm} />
+          </div>
+          <Detachable target={{ view: 'terminal', agentId: id }}>
+            <div className="pa-term-host">
+              {live?.ptyId ? (
+                <PtyTerminalView key={live.ptyId} ptyId={live.ptyId} embedded />
+              ) : floor.mode === 'demo' ? (
+                <TerminalView key={id} initialLines={demoTerminal(name, rail?.line)} />
+              ) : (
+                <EmptyState
+                  icon={<SquareTerminal size={20} />}
+                  title="No terminal"
+                  description={`${name} has no live session in this window.`}
+                />
+              )}
+            </div>
+          </Detachable>
           <Composer agentId={id} name={name} canQueue={!!live} />
         </section>
 

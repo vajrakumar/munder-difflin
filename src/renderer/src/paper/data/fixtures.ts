@@ -19,7 +19,19 @@ export const DEMO_AGENTS: PaperAgent[] = [
   { id: 'tester-mv2fnyz5', name: 'Tester', role: 'Tests the code and files bugs', status: 'waiting' },
   { id: 'phyllis-mv2fq1rq', name: 'Phyllis', role: 'Prepares and ships releases', status: 'thinking' },
   { id: 'worker-ui-inbox-tasks', name: 'Kelly', role: 'Temp: Inbox and Tasks screens', status: 'working' },
-  { id: 'researcher-mv2fpi4s', name: 'Researcher', role: 'Gathers and summarizes', status: 'ghost', archived: true }
+  {
+    id: 'researcher-mv2fpi4s', name: 'Researcher', role: 'Gathers and summarizes', status: 'ghost', archived: true,
+    archivedAt: at(4 * HOUR), lastTaskKey: 'MDF-2', lastTaskTitle: 'Product plan: Pro parity and UI direction', diskUsed: '18 MB'
+  },
+  {
+    id: 'worker-memory-browser', name: 'Pam', role: 'Temp: Memory browser', status: 'ghost', archived: true,
+    archivedAt: at(90 * MIN), lastTaskKey: 'MDF-18', lastTaskTitle: 'Memory browser with cards, list and WebGL graph', diskUsed: '42 MB'
+  },
+  {
+    id: 'worker-automations', name: 'Andy', role: 'Temp: Automations', status: 'ghost', archived: true,
+    archivedAt: at(2 * HOUR), lastTaskKey: 'MDF-17', lastTaskTitle: 'Automations: schema, quiet hours, guardrails, presets',
+    diskUsed: '—', worktreeMissing: true
+  }
 ];
 
 type Seed = {
