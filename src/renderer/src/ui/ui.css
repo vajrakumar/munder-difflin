@@ -199,14 +199,65 @@
   width: 28px;
   height: 28px;
   border-radius: var(--paper-radius-full);
-  background: var(--paper-accent-4);
-  color: var(--paper-accent-12);
+  background: oklch(0.90 0.08 var(--paper-avatar-hue, 264));
+  color: oklch(0.32 0.12 var(--paper-avatar-hue, 264));
   font-size: 11px;
   font-weight: var(--paper-weight-semibold);
   user-select: none;
 }
+:root[data-paper-theme="dark"] .paper-avatar {
+  background: oklch(0.32 0.08 var(--paper-avatar-hue, 264));
+  color: oklch(0.90 0.06 var(--paper-avatar-hue, 264));
+}
 .paper-avatar-sm { width: 20px; height: 20px; font-size: 9px; }
 .paper-avatar-lg { width: 36px; height: 36px; font-size: 13px; }
+
+.paper-status-ring {
+  display: inline-grid;
+  place-items: center;
+  padding: 2px;
+  border-radius: var(--paper-radius-full);
+  box-shadow: 0 0 0 2px var(--paper-status-idle);
+}
+.paper-status-ring[data-status="thinking"] {
+  box-shadow: 0 0 0 2px var(--paper-status-thinking);
+  animation: paper-ring-pulse 1.2s var(--paper-ease) infinite;
+}
+.paper-status-ring[data-status="working"] {
+  box-shadow: 0 0 0 2px var(--paper-status-working);
+  animation: paper-ring-pulse 0.9s var(--paper-ease) infinite;
+}
+.paper-status-ring[data-status="waiting"] {
+  box-shadow: 0 0 0 2px var(--paper-status-waiting);
+}
+.paper-status-ring[data-status="blocked"] {
+  box-shadow: 0 0 0 2px var(--paper-status-blocked);
+}
+.paper-status-ring[data-status="success"] {
+  box-shadow: 0 0 0 2px var(--paper-status-success);
+}
+.paper-status-ring[data-status="ghost"] {
+  box-shadow: 0 0 0 2px var(--paper-status-ghost);
+  opacity: 0.55;
+}
+.paper-status-ring[data-status="compacting"] {
+  box-shadow: 0 0 0 2px var(--paper-status-compacting);
+  animation: paper-ring-pulse 1.6s var(--paper-ease) infinite;
+}
+.paper-status-ring[data-status="looping"] {
+  box-shadow: 0 0 0 2px var(--paper-status-looping);
+  animation: paper-ring-pulse 0.45s var(--paper-ease) infinite;
+}
+.paper-status-ring[data-status="typing"] {
+  box-shadow: 0 0 0 2px var(--paper-status-typing);
+}
+@keyframes paper-ring-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-status-ring { animation: none; }
+}
 
 .paper-card {
   background: var(--paper-surface);
