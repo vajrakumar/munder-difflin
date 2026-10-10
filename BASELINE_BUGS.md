@@ -219,6 +219,8 @@ Tab reaches theme toggles, buttons, Query input, Radix Select, Combobox trigger,
 
 **P1 B-67-1 · Combobox options are mouse-only.** `src/renderer/src/ui/Combobox.tsx`: list rows are `<div class="paper-combobox-item">` with `onMouseDown` only — no `role="option"`, no `tabIndex`, no Arrow/Enter/Space handler. Opening the Michael combobox moves focus into an unlabeled filter `<Input>`; ArrowDown does not highlight Developer/Tester. Keyboard users cannot change the value.
 
+**Verified 2026-10-10 (MDF-41 `2da54fbe` / merge `e1273f52`).** Gallery Combobox trigger `aria-haspopup="listbox"`; open list is `role="listbox"` with `role="option"` rows; ArrowDown highlights Tester (`data-highlighted`); Enter commits the trigger to “Tester”. Evidence `/tmp/mdf41-verify/`.
+
 ### Contrast (WCAG 2.2 AA) — light / dark / hc
 
 OKLCH semantic pairs, measured from computed tokens (sRGB conversion):
@@ -274,6 +276,8 @@ Title bar, resizable sidebar, hash router (`#/inbox`, `#/agent/developer-mv2fn62
 
 **P1 B-810-1 · Collapsed sidebar nav links have no accessible name.** At width ≤ 72px, `.paper-nav` keeps the Lucide icon and drops the text. No `aria-label`. Home / Inbox / Tasks / … become empty links. Collapsed agent rows still contain `Avatar aria-label={name}`.
 
+**Verified 2026-10-10 (MDF-41).** At sidebar width 64px (`data-collapsed=true`), all eight workspace nav links expose `aria-label` (Home, Inbox, Tasks, Automations, Memory, Capabilities, Temps, Stapler). Unnamed count: 0. Screenshot `/tmp/mdf41-verify/03-collapsed-nav.png`.
+
 **P2 B-810-2 · Sidebar handle is unnamed; keys are physical.** Same pattern as the gallery Splitter. Focus fill `--paper-accent-8` is strong (a full-height blue bar).
 
 **P2 B-810-3 · Agent live-status text clips.** “idle” → “idl”, “working” → “workin”, “waiting” → “waitin” in the default 248px sidebar.
@@ -285,6 +289,8 @@ Title bar, resizable sidebar, hash router (`#/inbox`, `#/agent/developer-mv2fn62
 ⌘K and the title-bar Search button open a `role="dialog"` `aria-label="Command palette"` with 15 actions. Input autofocuses; ArrowUp/Down move `data-active`; Enter runs; Escape closes. Filter “inbox” narrows the list. Overlay click closes.
 
 **P1 B-810-5 · Palette does not trap Tab.** Overlay is a full-viewport `<button aria-label="Close palette">` in the tab order. After the last action, Tab continues into the title bar / sidebar behind the dimmed overlay (Classic UI, nav). Custom dialog, not Radix.
+
+**Verified 2026-10-10 (MDF-41).** Overlay `tabIndex=-1`. Palette `role="dialog"` `aria-modal="true"`. Search field `aria-label="Search or jump"`. Eight Tab keypresses stayed on `.paper-palette-input` (0 leaks into title bar / sidebar). Escape closes. Screenshot `/tmp/mdf41-verify/04-palette.png`.
 
 **P2 B-810-6 · Palette search field has no accessible name** (placeholder “Search or jump…” only). Action rows are `<button>`s, not `listbox`/`option`. No `aria-activedescendant`.
 
@@ -312,3 +318,107 @@ Status not exposed to SR: see B-67-4.
 - P1: 3
 - P2: 15
 - Electron: not launched
+
+---
+
+## Packaged app smoke (8b829b58)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied**
+
+| Item | Value |
+| --- | --- |
+| Commit | `8b829b58` `fork: keep CFBundleName = productName so the app launches` (contains MDF-36 pin `31f9bfa2`) |
+| App | `/Users/vajra/APILayer/myDifflin/munder-difflin/dist/mac-arm64/Vajras Office.app` · mtime 2026-10-10T14:20:05Z · **0.6.0-fork.1** · id `com.vajras-office.app` · binary `Vajras Office` |
+| userData | `~/Library/Application Support/vajras-office` |
+| Packaged hive | `~/Library/Application Support/vajras-office/harness-home` |
+| Launch | `"…/Vajras Office.app/Contents/MacOS/Vajras Office" --remote-debugging-port=9335` (pid 35460) |
+| Installed app (untouched) | v0.5.5 `/Applications/Munder Difflin.app` pid 55356 still running after fork quit |
+| Evidence | `/tmp/mdf-pkg-smoke/` |
+
+### Isolation (gate)
+
+Live `/Users/vajra/APILayer/myDifflin/hive/log.jsonl` snapshot before launch: **166** lines. After onboarding + spawn + Paper/classic + quit: **243** lines, **+77**. New kinds were `message` / `pty-submit` / `spawn` / `session` / `archive` / `tasks-keyed` from the **installed** office. **Fork `app-start` / `Vajras` / `vajras-office` / `0.6.0-fork` hits: 0.** Did not quit for contamination.
+
+Packaged hive `log.jsonl` recorded its own `app-start` (`version: 0.6.0-fork.1`, `packaged: true`, `appPath` the dist asar), `hooks` on the vajras-office sock, then `spawn` Michael (`god`) and Pam (`pam-mv2htw6i`).
+
+`config.json` after: `harnessHome` = `…/vajras-office/harness-home`, `onboardingComplete: true`. Not the live tree, not `~/HarnessAgents`.
+
+### What passed
+
+- Launches **beside** the installed app (two windows; two userData folders; two bundle ids).
+- First-run onboarding: technical → set it up → home (Tester overrode the default; see B-pkg-3) → engine Claude Opus 4.8 1M → skip repos → auto mode → Finish. Landed on classic Command Center. Michael spawned.
+- Add Agent: name **Pam**, character Pam, cwd = harness-home, spawn succeeded (`pty-pam-mv2htw6i`). Roster showed PAM + MICHAEL.
+- Classic is the default (`isClassicUi()` true, pixel office + canvas).
+- Paper via `?paper=1` + `localStorage paper.classicUi='0'`: `.paper-shell`, theme light, h1 Home, **Classic UI** title-bar button. Screenshot `15-paper.png`.
+- Title-bar **Classic UI** click sets `paper.classicUi='1'` and strips `?paper=1` (see B-pkg-1 for where it lands). After **open** on CURRENT harness-home, classic Command Center returned with canvas, Michael + Pam (`17-classic-command-center.png`).
+- Quit: Cmd+Q → **QUITTING NOW?** / **2 AGENTS STILL RUNNING** / keep them running · closing time · kill all & quit (`18-quit-modal.png`). **kill all & quit** exited pid 35460 in ~1s. No leftover `Vajras` / vajras-office claude processes. Installed Munder Difflin pid 55356 + live `hooks.sock` still up.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-pkg-1 · Paper **Classic UI** toggle dumps the hive picker, not the office
+
+**Flow:** Paper title-bar toggle (requested check).  
+**Steps:** From Paper Home, click **Classic UI**.  
+**Expected:** pixel Command Center for the already-open harness, same roster.  
+**Actual:** full-screen **SELECT A HARNESS CONFIG** with CURRENT `harness-home` (`16-classic-after-toggle.png`). `location.replace` remounts classic from a cold renderer. Clicking **open** restores the office; sprites then show **reconnecting…**. Classic chrome has **no** Paper UI control to go back (`paperToggle: false`).
+
+**Severity: P1** (the advertised toggle does not restore the running office).
+
+### P2
+
+### B-pkg-2 · Packaged chrome still says **Munder Difflin**
+
+Window `<title>` in asar `out/renderer/index.html` is `Munder Difflin`. Paper title-bar brand in `PaperApp-C-KYBAjh.js` is the literal `"Munder Difflin"` (no `Vajra`). Onboarding headline **WELCOME TO MUNDER DIFFLIN**; body copy “Munder Difflin turns the CLI agent…”. Dock/Finder name is **Vajra's Office**. At `8b829b58` this is what shipped; later source retitles `index.html` / `en.json` persona.
+
+**Severity: P2** (wrong product name on every first-run surface).
+
+### B-pkg-3 · Onboarding Home still defaults to `~/HarnessAgents`
+
+**Flow:** first-run Step 1 of 4.  
+**Expected:** default is the pinned fork home `~/Library/Application Support/vajras-office/harness-home` (`FORK_HOME_DIR_NAME`).  
+**Actual:** field + copy suggest `~/HarnessAgents` (`04-home.png`). Tester pasted the isolated path before Finish. Accepting the default would create a third hive outside both the live office and userData.
+
+**Severity: P2** (MDF-36 pin is easy to walk around on the happy path).
+
+### B-pkg-4 · Add Agent has no project if onboarding skipped repos
+
+Skipping repos leaves the Identity/Workspace step without a registered folder. Spawn requires name + cwd + command; Tester had to type the harness-home path. After Finish, `registeredRepos` later included that path.
+
+**Severity: P2**
+
+### B-pkg-5 · Paper agent rail is a stub, not the packaged hive
+
+Paper sidebar listed **Michael / Developer / Tester** (demo statuses idle/working/waiting) and Home copy “Live agent tiles land in MDF-12… Not wired yet”. Packaged hive at that moment was Michael + Pam. Expected until MDF-12; still wrong if someone treats Paper as the live office.
+
+**Severity: P2** (known gap; filing so the smoke is complete).
+
+### B-pkg-6 · Classic title bar has no Paper UI toggle
+
+Paper → Classic is a titled button. Classic → Paper is only `?paper=1` or `localStorage paper.classicUi='0'`. No title-bar control on the pixel chrome.
+
+**Severity: P2**
+
+### Packaged smoke counts
+
+- P0: 0
+- P1: 1 (Classic UI toggle → hive picker)
+- P2: 5
+- Isolation: held (live log gained no fork `app-start`)
+
+---
+
+## MDF-41 re-verify
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · browser only · gallery `http://127.0.0.1:5179` (worktree `munder-difflin-ui` HEAD includes `e1273f52`). God named `3adf932d`; the a11y merge on `fork/main` is **`e1273f52`** (`2da54fbe` fix). Evidence `/tmp/mdf41-verify/`.
+
+| Bug | Result |
+| --- | --- |
+| P1 B-67-1 Combobox keyboard / roles | **Verified.** Trigger `aria-haspopup=listbox`; list `role=listbox` + `role=option`; ArrowDown highlights; Enter selected Tester. |
+| P1 B-810-1 Collapsed nav names | **Verified.** Width 64px, 8/8 workspace links have `aria-label`, 0 unnamed. |
+| P1 B-810-5 Palette Tab trap | **Verified.** Overlay `tabIndex=-1`; 8 Tabs stayed on the palette input; Escape closes. |
+
+No P1 reopened. Residual (not a reopen): every Combobox hardcodes `id="paper-cb-list"`, so two gallery Comboboxes share one listbox id — SR `aria-controls` can point at the wrong list. Not one of the three P1s.
