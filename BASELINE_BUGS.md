@@ -1019,3 +1019,98 @@ None this run.
 - P2: 5
 - Electron: not launched
 
+---
+
+## MDF-50 Orchestrator two-pane re-check
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-6a7ace.
+
+`e2714211` / merge `64e6c7b4` on fork/main. Gallery `http://127.0.0.1:5183/paper.html#/orchestrator` from the **main clone**. Developer :5179 left running. Evidence `/tmp/mdf50-qa/`. Electron not launched.
+
+Re-check of **B-14-1** (MDF-14): `@container room (max-width: 760px)` stacked the Orchestrator so the terminal became a strip at default 1280 with inspector (room 661px) and at 1024×640.
+
+### Result
+
+| Viewport | Room | grid-template-columns | Terminal | Two-pane? |
+| --- | --- | --- | --- | --- |
+| 1280×900 + inspector | 661×855 | `369px 268px` / one row 742 | 369×742 | **Yes** |
+| 1024×640 + inspector | 405×595 | `201px 180px` / one row 482 | 201×482 | **Yes** |
+| 1024×640 inspector off | 738×595 | `405px 293px` / one row 474 | 405×474 | **Yes** |
+
+`data-orch="true"` keeps `.pa-body` two-pane under the 760px room query. Stacking for Orchestrator is `@container room (max-width: 360px)` only. `#/agent/god` is the same orch room. Screenshots `01-orch-1280.png`, `02-orch-1024.png`, `03-orch-1024-noins.png`.
+
+At 1024×640 the Inspector is a **Sheet** (MDF-46 P1 #3, ≤1100). That overlay is separate from the room grid; the terminal stays a column, not a strip.
+
+**B-14-1 verified.** No P1 reopened. No new P0/P1/P2 this pass.
+
+---
+
+## MDF-22 archive + detach (paper.html#/agents/archived)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-565a8f.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** at `http://127.0.0.1:5183/paper.html#/agents/archived` (merge `3b48e7dc`). Developer gallery :5179 left running. Evidence `/tmp/mdf22-qa/`. Chrome CDP 9340.
+
+Demo: three archived rows (Pam, Andy with **Worktree is missing**, Researcher). Sidebar footer **3 archived**.
+
+### What passed
+
+- Archived table Name / Archived / Last task / Disk / Actions. Andy gets **Reopen with a fresh worktree**. **j / k**, **Enter**, **/** documented. 0 unnamed chrome buttons.
+- Live agent overflow (**Developer actions**) menu is **Stop** and **Archive** as separate items. Archive opens **Archive Developer?** (stops, hides, keeps memory/inbox/worktree, reopen from Archived agents). Cancel dismisses. Screenshot `02-stop-archive-menu.png`, `03-archive-dialog.png`.
+- Home **Detach office** (`aria-label`) leaves **Shown in another window — Bring back**. Screenshot `05-home-detach.png`. Dark archived paints. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+None this run.
+
+### P2
+
+### B-22-1 · Delete permanently wraps and clips at 1024×640
+
+**Flow:** `#/agents/archived` at min window.  
+**Expected:** Reopen and Delete stay on one line per row.  
+**Actual:** **Delete permanently** wraps; Researcher’s control clips to **Delete**. Screenshot `06-archived-1024.png`.
+
+**Severity: P2** (layout)
+
+### B-22-2 · Delete permanently shares one name on every row
+
+**Flow:** Archived table.  
+**Expected:** **Delete Pam permanently**.  
+**Actual:** every row is a `<Button>` with visible text **Delete permanently** and no per-row `aria-label`. Reopen on Andy is already distinct.
+
+**Severity: P2** (a11y)
+
+### MDF-22 counts
+
+- P0: 0
+- P1: 0
+- P2: 2
+- Electron: not launched
+
+---
+
+## MDF-51 Memory topic filter re-check
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-f9702f.
+
+`f6551f34` / merge `da1d8dd1` on fork/main. Gallery `http://127.0.0.1:5183/paper.html#/memory` from the **main clone**. Developer :5179 left running. Evidence `/tmp/mdf51-qa/`. Electron not launched.
+
+Re-check of **B-18-1**: Graph topics were filenames (`## memory.md`) so the first topic emptied the board.
+
+### Result
+
+Graph SR list is **Topic Release checklist**, **Topic Broker token**, **Topic Electron upgrade**, **Topic paper screens**, **Topic Paper shell**. `hasMemoryMd` is **false**. Lede **10 results**. Screenshot `01-graph.png`. `graphFromHits` concatenates hit bodies as-is (comment cites B-18-1).
+
+**B-18-1 verified.**
+
+Bonus: footer now documents **1 2 3 4** views; digit **4** selects Knowledge (`AFTER_DIGIT4` Knowledge `aria-selected=true`). **B-18-4** (no digit-4) is also fixed.
+
+Left open from MDF-18 (not in this ticket): B-18-2, B-18-3, B-18-5, B-18-6, B-18-7, B-18-8, B-18-10. B-18-9 (recent() hid 2 of 10) looks fixed (lede **10 results**).
+
+No P1 reopened. No new P0/P1/P2 this pass.
+
