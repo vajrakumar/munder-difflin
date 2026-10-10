@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   DEFAULT_AGENTS,
   DEFAULT_NOTES,
@@ -45,7 +45,7 @@ function loadNotes(): PaperNote[] {
   return saved ?? DEFAULT_NOTES.map((n) => ({ ...n }));
 }
 
-export function useProSidebar(): {
+type ProSidebarStore = {
   agents: PaperAgent[];
   notes: PaperNote[];
   projects: typeof DEFAULT_PROJECTS;
@@ -58,7 +58,11 @@ export function useProSidebar(): {
   upsertNote: (note: PaperNote) => void;
   removeNote: (id: string) => void;
   createNote: () => PaperNote;
-} {
+};
+
+const ProSidebarCtx = createContext<ProSidebarStore | null>(null);
+
+function useProSidebarStore(): ProSidebarStore {
   const [agents, setAgents] = useState<PaperAgent[]>(loadAgents);
   const [notes, setNotes] = useState<PaperNote[]>(loadNotes);
   const [order, setOrder] = useState<string[]>(() =>
@@ -169,4 +173,15 @@ export function useProSidebar(): {
     removeNote,
     createNote
   };
+}
+
+export function ProSidebarProvider({ children }: { children: ReactNode }): JSX.Element {
+  const value = useProSidebarStore();
+  return createElement(ProSidebarCtx.Provider, { value }, children);
+}
+
+export function useProSidebar(): ProSidebarStore {
+  const ctx = useContext(ProSidebarCtx);
+  if (!ctx) throw new Error('useProSidebar must be used under ProSidebarProvider');
+  return ctx;
 }

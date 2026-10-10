@@ -10,7 +10,7 @@ import { hrefFor, parseHash, type PaperRoute } from './routes';
 import { SCREENS } from './screens';
 import { useInboxNeedsYou } from './screens/inbox/badge';
 import { Sidebar } from './Sidebar';
-import { useProSidebar } from './sidebarState';
+import { ProSidebarProvider, useProSidebar } from './sidebarState';
 import './shell.css';
 
 function screenCopy(route: PaperRoute, agentName?: string): { title: string; lede: string } {
@@ -36,6 +36,14 @@ function screenCopy(route: PaperRoute, agentName?: string): { title: string; led
 }
 
 export function PaperApp(): JSX.Element {
+  return (
+    <ProSidebarProvider>
+      <PaperShell />
+    </ProSidebarProvider>
+  );
+}
+
+function PaperShell(): JSX.Element {
   const [loc, setLoc] = useState(() => parseHash(window.location.hash));
   const [theme, setTheme] = useState<PaperTheme>(() => paperThemeFromRoot());
   const [sidebar, setSidebar] = useState(() => {
