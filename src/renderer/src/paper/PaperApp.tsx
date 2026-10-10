@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Mic, Moon, PanelRight, Sun, SunMoon, User } from 'lucide-react';
+import { Mic, Moon, PanelRight, Settings, Sun, SunMoon, User } from 'lucide-react';
 import {
   Avatar, Badge, EmptyState, IconButton, Kbd,
   Menu, MenuContent, MenuItem, MenuRadioGroup, MenuRadioItem, MenuSeparator, MenuTrigger,
@@ -19,7 +19,9 @@ import { useInboxNeedsYou } from './screens/inbox/badge';
 import { Sidebar } from './Sidebar';
 import { ProSidebarProvider, useProSidebar } from './sidebarState';
 import { floorStatusLine, spendTodayLabel } from './statusLine';
+import { hydrateAppearance } from './appearancePref';
 import { applyPref, readThemePref, resolvedTheme, systemIsDark, writeThemePref, type PaperThemePref } from './themePref';
+import { useDirectionSync } from '@/i18n/useDirection';
 import './shell.css';
 
 function screenCopy(route: PaperRoute, agentName?: string): { title: string; lede: string } {
@@ -42,13 +44,15 @@ function screenCopy(route: PaperRoute, agentName?: string): { title: string; led
     notes: { title: 'Notes', lede: 'Private, searchable, on this machine.' },
     agent: { title: 'Agent', lede: '' },
     orchestrator: { title: agentName ?? 'Michael', lede: 'Routing, the board, breaker and fleet spend, on the agent room.' },
-    archived: { title: 'Archived agents', lede: 'Reopen or delete permanently. Memory and inbox stay until you delete.' }
+    archived: { title: 'Archived agents', lede: 'Reopen or delete permanently. Memory and inbox stay until you delete.' },
+    settings: { title: 'Settings', lede: 'Search any setting. One Save bar. Appearance, budgets, connections.' },
+    onboarding: { title: 'Onboarding', lede: 'Three steps to a running office.' }
   };
   return map[route];
 }
 
 function defaultInspector(route: PaperRoute): boolean {
-  return route !== 'inbox';
+  return route !== 'inbox' && route !== 'settings' && route !== 'onboarding' && route !== 'connections';
 }
 
 function readInspectorMap(): Record<string, boolean> {
@@ -95,6 +99,7 @@ function DetachBridge(): null {
 }
 
 function PaperShell(): JSX.Element {
+  useDirectionSync();
   const [loc, setLoc] = useState(() => parseHash(window.location.hash));
   const [themePref, setThemePref] = useState<PaperThemePref>(readThemePref);
   const [systemDark, setSystemDark] = useState(systemIsDark);
@@ -115,7 +120,19 @@ function PaperShell(): JSX.Element {
 
   useLayoutEffect(() => {
     applyPref(themePref, systemDark);
+    hydrateAppearance();
   }, [themePref, systemDark]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key === ',') {
+        e.preventDefault();
+        window.location.hash = hrefFor('settings');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -311,6 +328,11 @@ function PaperShell(): JSX.Element {
               <Mic size={16} />
             </IconButton>
           </Tooltip>
+          <Tooltip content="Settings">
+            <IconButton label="Settings" onClick={() => { window.location.hash = hrefFor('settings'); }}>
+              <Settings size={16} />
+            </IconButton>
+          </Tooltip>
           <Menu>
             <MenuTrigger asChild>
               <IconButton label="Account">
@@ -318,6 +340,8 @@ function PaperShell(): JSX.Element {
               </IconButton>
             </MenuTrigger>
             <MenuContent align="end">
+              <MenuItem onSelect={() => { window.location.hash = hrefFor('settings'); }}>Settings</MenuItem>
+              <MenuItem onSelect={() => { window.location.hash = hrefFor('onboarding'); }}>Onboarding</MenuItem>
               <MenuItem onSelect={() => setClassicUi(true)}>Classic UI</MenuItem>
               <MenuSeparator />
               <MenuItem onSelect={() => setPalette(true)}>Command palette</MenuItem>

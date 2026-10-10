@@ -205,6 +205,7 @@
     "resetting": "resetting...",
     "eraseEverything": "erase everything & restart",
     "nav": {
+      "appearance": "Appearance",
       "general": "General",
       "prerequisites": "Prerequisites",
       "agentsModels": "Agents & Models",
@@ -225,6 +226,7 @@
     },
     "general": {
       "homeFolder": "Home folder",
+      "homeFolderHelp": "Pinned fork home. Changing it uses Settings → Change home and restarts.",
       "environment": "Environment",
       "keepAwake": "Keep Mac awake while agents run",
       "keepAwakeDesc": "Blocks display sleep so schedules and terminals keep firing on time. Costs battery — best on AC.",
@@ -257,7 +259,9 @@
       "advanced": "Advanced",
       "maxTurns": "Max turns per run",
       "unlimited": "unlimited",
-      "blankUnlimited": "blank = unlimited"
+      "blankUnlimited": "blank = unlimited",
+      "orchSpawn": "Orchestrator may spawn temps",
+      "orchSpawnHelp": "When on, the orchestrator can hire short-lived workers on its own."
     },
     "autonomy": {
       "autonomy": "Autonomy",
@@ -281,7 +285,9 @@
       "hardStopDesc": "When tripped, KILL the agent instead of just constraining it. Off = steer-first (recommended).",
       "killOnTrip": "kill on trip",
       "steerFirst": "steer first",
-      "saved": "saved"
+      "saved": "saved",
+      "agentTokenCap": "Per-agent token cap",
+      "agentTokenCapHelp": "Optional cap applied to each new agent. Blank inherits the floor budget."
     },
     "memory": {
       "semanticMemory": "Semantic memory",
@@ -295,7 +301,34 @@
       "docCount": "{{count}} document indexed",
       "docCountPlural": "{{count}} documents indexed"
     },
+    "prereq": {
+      "lede": "Tools the office needs. Missing ones get an install card.",
+      "git": "Git",
+      "gitHelp": "Required to clone and commit in agent worktrees.",
+      "node": "Node.js",
+      "nodeHelp": "Required for the gallery, hooks and some engine installers.",
+      "claude": "Claude Code",
+      "claudeHelp": "Recommended orchestrator engine. Installs on first run if missing."
+    },
+    "appearance": {
+      "lede": "Theme, density, accent and the optional office floor.",
+      "theme": "Theme",
+      "themeHelp": "Light, dark or high contrast. System follows the OS.",
+      "density": "Density",
+      "densityHelp": "How tight the layout is: compact, comfortable or roomy.",
+      "compact": "Compact",
+      "comfortable": "Comfortable",
+      "roomy": "Roomy",
+      "accent": "Accent colour",
+      "accentHelp": "The highlight colour used on buttons, badges and focus.",
+      "office": "Office view",
+      "officeHelp": "Keep the pixel office floor as an optional view beside Paper."
+    },
     "connections": {
+      "lede": "Slack, webhooks and REST integrations. Secrets never come back to the renderer.",
+      "integrations": "REST integrations",
+      "integrationsHelp": "APIs agents can call without ever seeing the key.",
+      "openTemps": "Open Temps & Connections",
       "slack": "Slack",
       "slackIntegration": "Slack integration",
       "showSlackHelp": "Show Slack connect steps",
@@ -375,7 +408,16 @@
     "saved": "Saved",
     "saving": "Saving…",
     "unsavedChanges": "unsaved changes",
-    "unsavedWarning": "You have unsaved settings. Close anyway and lose them?"
+    "unsavedWarning": "You have unsaved settings. Close anyway and lose them?",
+    "searchPlaceholder": "Search settings",
+    "searchNoResults": "No matching settings",
+    "review": "Review",
+    "discard": "Discard",
+    "reviewTitle": "Review changes",
+    "reviewDesc": "Nothing is written until you Save.",
+    "leaveTitle": "Unsaved changes",
+    "saveFailed": "Save failed. Nothing was written.",
+    "fieldError": "Enter a whole number, or leave blank."
   },
   "commandCenter": {
     "title": "COMMAND CENTER",
@@ -587,7 +629,23 @@
       "repos": "STEP 3 OF 4 · YOUR REPOS",
       "reposPlain": "STEP 3 OF 4 · YOUR PROJECTS",
       "permissions": "STEP 4 OF 4 · PERMISSIONS & RELIABILITY",
-      "done": "ALL SET"
+      "done": "ALL SET",
+      "engines": "STEP 1 OF 3 · ENGINES",
+      "workspace": "STEP 2 OF 3 · WORKSPACE",
+      "meet": "STEP 3 OF 3 · MEET YOUR OFFICE"
+    },
+    "advanced": "Advanced — permissions and reliability",
+    "skipWarn": "Skip anyway — the orchestrator will not start until this engine is installed.",
+    "installFailed": "This engine failed to install.",
+    "progress": "Progress",
+    "meet": {
+      "lede": "Name the office, start the orchestrator, and optionally drop in a sample task.",
+      "name": "Office name",
+      "nameHelp": "Defaults to Vajra's Office.",
+      "sample": "Add a sample task for the orchestrator",
+      "start": "Start the orchestrator",
+      "ready": "{{name}} is ready. The orchestrator is on {{engine}}.",
+      "openOffice": "Open the office"
     },
     "persona": {
       "headline": "A CLONE OF YOU, WORKING 24/7",
@@ -651,7 +709,9 @@
       "createPick": "create / pick",
       "pick": "pick",
       "notePlain": "You won't need to open this folder day-to-day — it's just where the app keeps its notes so nothing is lost when you restart.",
-      "note": "Think of this as the \"town hall.\" The harness pins agent state there so sessions can be picked back up after a restart."
+      "note": "Think of this as the \"town hall.\" The harness pins agent state there so sessions can be picked back up after a restart.",
+      "descFork": "The hive folder defaults to the pinned fork home so this install never shares the live office. Repos are optional.",
+      "resetDefault": "Use fork home"
     },
     "orchestrator": {
       "descPlain": "{{godName}} is your clone — he reads your requests, breaks them into tasks, and hands them to the right agent. He's the boss of the floor; you're still the boss of him. Choose which AI engine powers him.",

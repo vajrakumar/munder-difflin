@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Archive, Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, StickyNote,
+  Archive, Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, Settings, StickyNote,
   Timer, UserPlus, Users, Waypoints
 } from 'lucide-react';
 import { filterActions as rankActions, highlightMatch } from './actionSearch';
@@ -178,6 +178,23 @@ export function defaultActions(opts?: {
       shortcut: 'G R',
       icon: Archive,
       run: () => go('archived')
+    },
+    {
+      id: 'nav.settings',
+      label: 'Open Settings',
+      group: 'Navigate',
+      keywords: 'preferences appearance theme budget',
+      shortcut: '⌘,',
+      icon: Settings,
+      run: () => go('settings')
+    },
+    {
+      id: 'nav.onboarding',
+      label: 'Open onboarding',
+      group: 'Navigate',
+      keywords: 'setup first run wizard engines workspace',
+      icon: UserPlus,
+      run: () => go('onboarding')
     }
   ];
 }
