@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="./docs/logo.png" alt="Munder Difflin, the agent harness to run an office of your clones" width="180">
+<img src="./docs/logo.png" alt="Vajra, the agent harness to run an office of your clones" width="180">
 
-# Munder Difflin
+# Vajra
 
 ### Agent harness to run an office of your clones
 
@@ -11,7 +11,7 @@
   <a href="https://www.producthunt.com/products/munder-difflin?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_campaign=badge-munder-difflin" target="_blank" rel="noopener noreferrer"><img alt="Munder Difflin, #5 Product of the Day on Product Hunt" src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=1221363&theme=light&period=daily" width="250" height="54"></a>
 </p>
 
-<img src="./docs/media/floor.png" alt="The Munder Difflin office floor: agents at desks working in parallel, with the Command Center and a live agent terminal on the right" width="1240">
+<img src="./docs/media/floor.png" alt="The Vajra office floor: agents at desks working in parallel, with the Command Center and a live agent terminal on the right" width="1240">
 
 **Free, open source and performant.** A multi-agent harness that works with the
 subscriptions you already pay for, on their hourly limits. It turns the terminal coding CLI
@@ -43,7 +43,7 @@ visualized as avatars at work on a shared office floor.
 
 <!-- Inline player renders on github.com (raw URL required; relative paths only link). -->
 <video src="https://github.com/chaitanyagiri/munder-difflin/raw/main/docs/media/hero.mp4" controls muted loop playsinline width="820">
-  <a href="https://github.com/chaitanyagiri/munder-difflin/raw/main/docs/media/hero.mp4">▶ Watch the floor: Munder Difflin running a hive of Claude Code agents</a>
+  <a href="https://github.com/chaitanyagiri/munder-difflin/raw/main/docs/media/hero.mp4">▶ Watch the floor: Vajra running a hive of Claude Code agents</a>
 </video>
 
 <br><br>
@@ -65,7 +65,7 @@ countries and as low as $100 a year. <a href="https://app.harnessmd.com/console/
 
 > [!NOTE]
 > **The world's best agents. The world's worst paper company.**
-> Munder Difflin takes the terminal-agent CLIs you already run (`claude`, `agy`, `codex`, `grok`,
+> Vajra takes the terminal-agent CLIs you already run (`claude`, `agy`, `codex`, `grok`,
 > `kimi`, `qwen`, `opencode`, `crush`, `pi`, and `copilot`) and turns them
 > into a self-coordinating team: each agent gets long-term memory, a mailbox, and a desk on a 2D
 > office floor, and **your clone** (Michael) routes work between them while you watch. He's the
@@ -111,7 +111,7 @@ Plus **bring your own keys** and **local models** through Ollama, LM Studio or v
 
 ## What it is
 
-Munder Difflin is a desktop app that wraps **real terminal-agent CLIs** as fully-capable agents,
+Vajra is a desktop app that wraps **real terminal-agent CLIs** as fully-capable agents,
 wires them into a **hive mind**, and puts **your clone** in charge. Michael is the one agent *you*
 talk to in order to get things done. Under the hood it runs the **fastest memory layer in the
 world** so every agent remembers what it learns and recalls it instantly.
@@ -168,7 +168,7 @@ terminal/event plane, and [`DESIGN.md`](./DESIGN.md) for the visual system.
 
 **Dictate into any app.** Hold Option on the Mac, or Control+Alt+Space on Windows and Linux (X11),
 talk, and let go. The words land in whatever field is in front of you, and in every text box inside
-Munder Difflin. The message box mic works in the free build too.
+Vajra. The message box mic works in the free build too.
 
 **Meetings hear both sides**, in Stapler, part of Pro. Your microphone is written as You and the
 call's audio as Them, on Mac, Windows and Linux. Shift+Command+Space starts and stops a meeting on
@@ -363,13 +363,13 @@ than sending you to a docs page.
 > [download page](https://harnessmd.com/download). The open source build is on the
 > [releases page](https://github.com/chaitanyagiri/munder-difflin/releases/tag/v0.5.3).
 
-<div align="right">(<a href="#munder-difflin">↑ back to top</a>)</div>
+<div align="right">(<a href="#vajra">↑ back to top</a>)</div>
 
 ## Getting started
 
 ### Download the app
 
-**Most people want this one.** Munder Difflin is free and open source. Signed and notarized macOS
+**Most people want this one.** Vajra is free and open source. Signed and notarized macOS
 builds of 0.5.3, plus Windows and Linux, are on the [download page](https://harnessmd.com/download).
 The open source build is on the [latest GitHub release](https://github.com/chaitanyagiri/munder-difflin/releases/tag/v0.5.3). Install it,
 open it, and the wizard takes you the rest of the way. You do not need Node, a toolchain, or this
@@ -439,7 +439,7 @@ the product rather than the codebase. Also see [`HIVE.md`](./HIVE.md) for the mu
 [`SPEC.md`](./SPEC.md) for the terminal and event plane, and [`DESIGN.md`](./DESIGN.md) for the
 visual system.
 
-<div align="right">(<a href="#munder-difflin">↑ back to top</a>)</div>
+<div align="right">(<a href="#vajra">↑ back to top</a>)</div>
 
 ## Roadmap
 
@@ -465,7 +465,7 @@ Next up:
 - [ ] **Fuller avatar coverage**: drive the remaining station visits and tool-bubbles entirely from real hook events.
 - [ ] **Durable layout & command history**: extend persistence to agent layout and per-session history.
 
-<div align="right">(<a href="#munder-difflin">↑ back to top</a>)</div>
+<div align="right">(<a href="#vajra">↑ back to top</a>)</div>
 
 ## Contributing
 
@@ -487,7 +487,7 @@ Questions, bugs, or want to show off your office? Join the Discord: **<https://d
 [`good first issue`](https://github.com/chaitanyagiri/munder-difflin/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 list is kept stocked with small, self contained work that has a clear finish line.
 
-**Everyone whose code is in Munder Difflin is listed in [`CONTRIBUTORS.md`](./CONTRIBUTORS.md).**
+**Everyone whose code is in Vajra is listed in [`CONTRIBUTORS.md`](./CONTRIBUTORS.md).**
 If that is you, it is yours to point at. The list is generated from the pull requests themselves and
 updates on its own, so you appear without having to ask. It also names the contributions that are in
 `main` but that GitHub shows as closed rather than merged, because that was our mistake to record

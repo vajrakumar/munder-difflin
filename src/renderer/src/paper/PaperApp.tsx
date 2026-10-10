@@ -96,7 +96,7 @@ export function PaperApp(): JSX.Element {
     <TooltipProvider>
       <div className="paper-shell">
         <header className="paper-titlebar">
-          <span className="paper-titlebar-brand">Munder Difflin</span>
+          <span className="paper-titlebar-brand">Vajra's Office</span>
           <button type="button" className="paper-titlebar-search" onClick={() => setPalette(true)}>
             Search or jump
             <Kbd>⌘K</Kbd>
