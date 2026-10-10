@@ -1,8 +1,12 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { PaperApp } from './paper/PaperApp';
+import { isClassicUi } from './paper/classicFlag';
 import brandLogo from '@brand/logo.png?url';
 import './design/global.css';
+import './design/paper/tokens.css';
+import './ui/ui.css';
 import './i18n';
 
 const favicon = document.createElement('link');
@@ -23,8 +27,13 @@ if (splashMark) {
 const root = document.getElementById('root');
 if (!root) throw new Error('No root element');
 
+const classic = isClassicUi();
+if (!classic) {
+  document.getElementById('cth-splash')?.remove();
+}
+
 createRoot(root).render(
   <StrictMode>
-    <App />
+    {classic ? <App /> : <PaperApp />}
   </StrictMode>
 );

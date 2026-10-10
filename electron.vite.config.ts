@@ -75,7 +75,8 @@ export default defineConfig({
       rollupOptions: {
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
-          gallery: resolve(__dirname, 'src/renderer/gallery.html')
+          gallery: resolve(__dirname, 'src/renderer/gallery.html'),
+          paper: resolve(__dirname, 'src/renderer/paper.html')
         }
       }
     },

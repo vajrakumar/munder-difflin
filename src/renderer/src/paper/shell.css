@@ -1,0 +1,180 @@
+.paper-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-width: 1024px;
+  min-height: 640px;
+  background: var(--paper-bg);
+  color: var(--paper-text);
+  font-family: var(--paper-font-ui);
+  font-size: var(--paper-text-md);
+  line-height: var(--paper-leading-md);
+}
+
+.paper-titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--paper-space-3);
+  height: 44px;
+  padding: 0 var(--paper-space-3);
+  border-bottom: 1px solid var(--paper-border);
+  -webkit-app-region: drag;
+  flex: 0 0 44px;
+}
+.paper-titlebar > * { -webkit-app-region: no-drag; }
+
+.paper-titlebar-brand {
+  font-weight: var(--paper-weight-semibold);
+  font-size: var(--paper-text-sm);
+  letter-spacing: -0.01em;
+}
+
+.paper-titlebar-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--paper-border);
+  border-radius: var(--paper-radius-md);
+  background: var(--paper-surface);
+  color: var(--paper-text-muted);
+  font-size: var(--paper-text-sm);
+  cursor: pointer;
+  min-width: 200px;
+}
+.paper-titlebar-search:hover { border-color: var(--paper-border-strong); }
+
+.paper-titlebar-spacer { flex: 1; }
+
+.paper-titlebar-meta {
+  font-size: var(--paper-text-xs);
+  color: var(--paper-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.paper-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.paper-sidebar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-inline-end: 1px solid var(--paper-border);
+  background: var(--paper-bg-subtle);
+  min-width: 64px;
+  overflow: auto;
+}
+
+.paper-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--paper-space-2);
+  gap: 2px;
+}
+
+.paper-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--paper-radius-md);
+  background: transparent;
+  color: var(--paper-text);
+  font: inherit;
+  font-size: var(--paper-text-sm);
+  text-align: start;
+  cursor: pointer;
+  text-decoration: none;
+}
+.paper-nav:hover { background: var(--paper-neutral-3); }
+.paper-nav[aria-current="page"] {
+  background: var(--paper-accent-3);
+  color: var(--paper-accent-12);
+  font-weight: var(--paper-weight-medium);
+}
+.paper-nav-badge {
+  margin-inline-start: auto;
+  font-size: 11px;
+  color: var(--paper-text-muted);
+}
+
+.paper-nav-label {
+  font-size: var(--paper-text-xs);
+  font-weight: var(--paper-weight-medium);
+  color: var(--paper-text-muted);
+  padding: 12px 10px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.paper-sidebar-handle {
+  flex: 0 0 6px;
+  cursor: col-resize;
+  background: transparent;
+}
+.paper-sidebar-handle:hover,
+.paper-sidebar-handle:focus-visible {
+  background: var(--paper-accent-8);
+}
+
+.paper-main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: var(--paper-space-6);
+}
+
+.paper-main h1 {
+  margin: 0 0 8px;
+  font-size: var(--paper-text-xl);
+  line-height: var(--paper-leading-xl);
+  letter-spacing: -0.02em;
+}
+.paper-main p.lede {
+  margin: 0 0 24px;
+  color: var(--paper-text-muted);
+}
+
+.paper-inspector {
+  flex: 0 0 auto;
+  width: 300px;
+  border-inline-start: 1px solid var(--paper-border);
+  padding: var(--paper-space-4);
+  overflow: auto;
+  background: var(--paper-bg-subtle);
+}
+.paper-inspector h2 {
+  margin: 0 0 8px;
+  font-size: var(--paper-text-sm);
+  font-weight: var(--paper-weight-semibold);
+}
+
+.paper-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--paper-radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--paper-text-sm);
+  cursor: pointer;
+  text-align: start;
+}
+.paper-agent-row:hover { background: var(--paper-neutral-3); }
+.paper-agent-row[aria-current="page"] { background: var(--paper-accent-3); }
+.paper-agent-live {
+  margin-inline-start: auto;
+  font-size: 11px;
+  color: var(--paper-text-muted);
+}
