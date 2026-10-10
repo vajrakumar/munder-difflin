@@ -74,7 +74,7 @@ function isEntry(v: unknown): v is TriggerHistoryEntry {
   if (!v || typeof v !== 'object') return false;
   const e = v as Partial<TriggerHistoryEntry>;
   return typeof e.id === 'string'
-    && (e.source === 'webhook' || e.source === 'org')
+    && (e.source === 'webhook' || e.source === 'org' || e.source === 'schedule')
     && (e.direction === 'inbound' || e.direction === 'outbound')
     && typeof e.body === 'string'
     && typeof e.at === 'number';

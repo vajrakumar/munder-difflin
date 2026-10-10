@@ -19,6 +19,8 @@ export type { LocalSkill, CatalogSkill } from '../main/skills';
 import type {
   ContextRule, ContextTriggerConfig, OrgTriggerConfig, TriggerHistoryEntry, WebhookTrigger
 } from '../shared/triggers';
+import type { AutomationGuards } from '../shared/automationGuard';
+export type { AutomationGuards } from '../shared/automationGuard';
 export type {
   ContextRule, ContextTriggerConfig, OrgTriggerConfig, TriggerHistoryEntry, WebhookTrigger
 } from '../shared/triggers';
@@ -232,6 +234,10 @@ export interface ScheduledMission {
   id: string;
   label: string;
   intervalMs: number;
+  /** Day-of-week + time; replaces intervalMs when valid (shared/weeklySchedule). */
+  weekly?: { days: number[]; minute: number };
+  /** Quiet hours + guardrails (MDF-17). */
+  guards?: AutomationGuards;
   to: string;
   body: string;
   enabled: boolean;
@@ -1225,6 +1231,10 @@ const api = {
   /** Mint a 256-bit secret for the operator to paste into their caller. Not
    *  persisted until the endpoint carrying it is saved. */
   generateWebhookSecret: (): Promise<string> => ipcRenderer.invoke('webhooks:generateSecret'),
+  /** MDF-17: POST a sample payload to the local listener with the real secret
+   *  (main-side), returning the HTTP status and reply. status 0 = not sent. */
+  testWebhook: (id: string, payload: string): Promise<{ status: number; body?: unknown; error?: string }> =>
+    ipcRenderer.invoke('webhooks:test', { id, payload }),
   /** Server state, the tunnel root, and each endpoint's full public URL (`url` is
    *  '' until a tunnel has come up). */
   webhooksStatus: (): Promise<{ running: boolean; url?: string; endpoints: { id: string; url: string }[] }> =>

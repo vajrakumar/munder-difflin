@@ -14,6 +14,8 @@
  * `TriggerMode` gate and both write to one `TriggerHistoryEntry` ledger.
  */
 
+import type { AutomationGuards } from './automationGuard';
+
 /* ────────────────────────────── behaviour gate ───────────────────────────── */
 
 /**
@@ -166,6 +168,8 @@ export interface WebhookTrigger {
   /** User-editable JSON Schema (serialised) that inbound bodies are checked against. */
   schema: string;
   createdAt: number;
+  /** Quiet hours + guardrails (MDF-17), checked before a message is routed. */
+  guards?: AutomationGuards;
 }
 
 /**
@@ -226,8 +230,9 @@ export const CLONE_NODE_BLURB =
  */
 export interface TriggerHistoryEntry {
   id: string;
-  source: 'webhook' | 'org';
-  /** Which webhook (or which peer) — `WebhookTrigger.id` for webhooks. */
+  source: 'webhook' | 'org' | 'schedule';
+  /** Which webhook (or which peer) — `WebhookTrigger.id` for webhooks,
+   *  `ScheduledMission.id` for schedules. */
   sourceId: string;
   /** Display name at the time of the event, so history survives a rename/delete. */
   sourceName: string;
@@ -238,7 +243,10 @@ export interface TriggerHistoryEntry {
   /** Full message body — never truncated at rest; the UI decides how much to show. */
   body: string;
   kind: InboundKind;
-  decision?: 'auto-allowed' | 'pending' | 'approved' | 'rejected';
+  /** `skipped:*`, `dry-run` and `invalid` are automation outcomes (MDF-17):
+   *  a guard held the run back, or the payload failed the endpoint's schema. */
+  decision?: 'auto-allowed' | 'pending' | 'approved' | 'rejected'
+    | 'skipped:quiet' | 'skipped:cap' | 'dry-run' | 'invalid';
   correlationId?: string;
   taskId?: string;
   at: number;

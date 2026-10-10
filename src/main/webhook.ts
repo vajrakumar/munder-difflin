@@ -116,7 +116,22 @@ export interface WebhookServerOptions {
    * never reveal or enumerate any other task.
    */
   lookupStatus: (token: string) => WebhookTaskStatus | null;
+  /**
+   * MDF-17 quiet hours + guardrails, asked AFTER the body validated and BEFORE
+   * `onMessage` routes it. `skip` answers 503 (quiet hours) or 429 (daily cap);
+   * `dry-run` answers 200 without routing. Absent = always run. The caller
+   * records the outcome in the ledger; this class only maps it to HTTP.
+   */
+  guard?: (endpoint: WebhookEndpointRef) => WebhookGuardVerdict;
+  /** Told about an authenticated body that failed the schema (→ 400), so the
+   *  rejection can be logged. Never handed the secret. */
+  onInvalid?: (endpoint: WebhookEndpointRef, error: string) => void;
 }
+
+export type WebhookGuardVerdict =
+  | { action: 'run' }
+  | { action: 'dry-run' }
+  | { action: 'skip'; reason: 'quiet' | 'cap' };
 
 /** Reject bodies larger than this before buffering — callers send tiny JSON; the
  *  cap stops an unauthenticated peer forcing unbounded memory use pre-auth. */
@@ -147,6 +162,8 @@ export class WebhookServer {
   private endpoints = new Map<string, WebhookEndpoint>();
   private readonly onMessage: (msg: WebhookInbound, endpoint: WebhookEndpointRef) => WebhookDispatch | null;
   private readonly lookupStatus: (token: string) => WebhookTaskStatus | null;
+  private readonly guard?: (endpoint: WebhookEndpointRef) => WebhookGuardVerdict;
+  private readonly onInvalid?: (endpoint: WebhookEndpointRef, error: string) => void;
   /** Compared against when the requested id doesn't exist, purely so the failure
    *  path does the same work as a wrong-secret failure. Random per process and
    *  never exported, so it cannot be matched even by accident. */
@@ -159,6 +176,8 @@ export class WebhookServer {
     this.port = opts.port;
     this.onMessage = opts.onMessage;
     this.lookupStatus = opts.lookupStatus;
+    this.guard = opts.guard;
+    this.onInvalid = opts.onInvalid;
     this.setEndpoints(opts.endpoints);
   }
 
@@ -334,7 +353,11 @@ export class WebhookServer {
       // validator's message is safe: it describes the CALLER's payload and can
       // never contain our secret (the schema is the operator's own document).
       const check = validateAgainstSchema(parsed, parseSchema(endpoint.schema));
-      if (!check.ok) { json(res, 400, { ok: false, error: check.error }); return; }
+      if (!check.ok) {
+        try { this.onInvalid?.({ id: endpoint.id, name: endpoint.name }, check.error); } catch { /* logging must not fail the reply */ }
+        json(res, 400, { ok: false, error: check.error });
+        return;
+      }
 
       const body = (parsed ?? {}) as Record<string, unknown>;
       // `message` is required regardless of what the user's schema says — it is
@@ -348,6 +371,17 @@ export class WebhookServer {
       if (body.kind === 'directive' || body.kind === 'communication') inbound.kind = body.kind;
       const from = typeof body.from === 'string' ? body.from.trim() : '';
       if (from) inbound.from = from;
+
+      let verdict: WebhookGuardVerdict = { action: 'run' };
+      try { verdict = this.guard?.({ id: endpoint.id, name: endpoint.name }) ?? verdict; } catch { /* a broken guard never blocks */ }
+      if (verdict.action === 'skip') {
+        json(res, verdict.reason === 'quiet' ? 503 : 429, {
+          ok: false, skipped: verdict.reason,
+          error: verdict.reason === 'quiet' ? 'quiet hours' : 'daily run limit reached'
+        });
+        return;
+      }
+      if (verdict.action === 'dry-run') { json(res, 200, { ok: true, dryRun: true }); return; }
 
       let out: WebhookDispatch | null = null;
       try { out = this.onMessage(inbound, { id: endpoint.id, name: endpoint.name }); }
