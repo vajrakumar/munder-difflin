@@ -806,3 +806,139 @@ Title bar has **$2.65 today**, Voice, Account; Classic UI is out of the bar (acc
 - P2: 1 leftover (Dwight at 1024×640)
 - Electron: not launched
 
+---
+
+## MDF-17 Automations (paper.html#/automations)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-10d3c2.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** at `http://127.0.0.1:5183/paper.html#/automations` (merge `c7be65e7`; HEAD of the clone at QA time `641a49d9`, later `7a0b99d5`). Developer gallery :5179 left running. Evidence `/tmp/mdf17-qa/`. Chrome CDP 9340. Hard reload (`Network.setCacheDisabled` + `Page.reload({ignoreCache:true})`) before the dump.
+
+Demo: `automationsSource()` (no `window.cth`). Badge **Demo data**. Six rows on All: Ops standup, Morning digest, Weekly npm audit, GitHub PRs webhook, Auto-compact / Auto-clear context.
+
+### What passed
+
+- Tabs All / Schedules / Webhooks / History. **h** opens History. **n** opens New schedule (target Michael/god, Type it “every weekday 9am”, Next 3 runs, Quiet hours, Guardrails). **⇧N** is labelled on New webhook. **j / k** move selection (after two **j**s Weekly npm audit is selected). **Enter** opens the Schedule sheet. Switches have names **Turn {row} on or off**.
+- Sheet fields: Name, Target agent, Message, Type it, Days, Time, Next 3 runs, Quiet hours, Guardrails. Close (X) dismisses. Screenshot `03-sheet.png`, `07-new-schedule.png`.
+- History ledger has 4 rows: ran / waiting on you / skipped:quiet / missing required field. Screenshot `04-history.png`.
+- RTL (`dir=rtl`) reverses Name/Type/Next/Last/On. Screenshot `09-rtl.png`.
+- 1024×640: six rows and the footer keys stay in view. Screenshot `10-1024.png`. Dark paints. 0 unnamed chrome buttons. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-17-1 · History ledger packs to the right and clips Status
+
+**Flow:** `#/automations` → History (**h**).  
+**Expected:** When / Source / What / Status share the pane; **waiting on you** shows Approve · Deny; What ellipsizes on purpose (`.pa-what { max-width: 36ch }`).  
+**Actual:** the table sits in the right half of `.pa-body`. What is clipped mid-word (“Post the hourly flo”, “Deploy the hotf”). Status (and the pending-row Approve/Deny) is off-canvas. `.pa-history-bar { justify-content: flex-end }` parks **Clear history** against the When header instead of as a page action. Screenshot `04-history.png`.
+
+**Severity: P1** (layout — pending-webhook approve is the History job).
+
+### P2
+
+### B-17-2 · History tab accessible name is **HistoryH**
+
+**Flow:** All dump.  
+**Expected:** tab name **History**; **H** is a separate kbd hint.  
+**Actual:** `<TabsTrigger>…{t.filters[f]}{f === 'history' && <Kbd>H</Kbd>}</TabsTrigger>` concatenates. Dump `tabs[3].t` is **HistoryH**. Screenshot `01-all.png`.
+
+**Severity: P2** (a11y)
+
+### B-17-3 · New schedule primary control looks like a switch
+
+**Flow:** header actions.  
+**Expected:** **New schedule** reads as a button; **N** is a kbd chip.  
+**Actual:** `<Kbd>N</Kbd>` on `variant="primary"` paints a white pill on the filled blue control — same silhouette as the On column switches. Screenshots `01-all.png`, `10-1024.png`.
+
+**Severity: P2** (visual)
+
+### B-17-4 · Roster rows are not in the tab order
+
+**Flow:** keyboard. Footer documents **J K** move.  
+**Expected:** a roving `tabIndex={0}` on the selected row, or the name button is enough and rows are not `aria-selected`.  
+**Actual:** every `TR` is `tabIndex={-1}` with `aria-selected`. Name is a `<button class="pa-link">`. Context rows have no name button. Dump `rowSample[].tab` is **-1**.
+
+**Severity: P2** (a11y)
+
+### B-17-5 · Context rows look editable and do nothing on click / Enter
+
+**Flow:** All tab, Auto-compact / Auto-clear (`class="pa-tr is-context"`).  
+**Expected:** either an editor, or the row does not share the clickable `pa-tr` cursor.  
+**Actual:** `openRow` only handles `schedule` and `webhook`. Click / Enter on a context row is a no-op (the switch still toggles).
+
+**Severity: P2**
+
+### MDF-17 counts
+
+- P0: 0
+- P1: 1 (History layout)
+- P2: 4
+- Electron: not launched
+
+---
+
+## MDF-19 Capabilities (paper.html#/capabilities)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-8ef02f.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** at `http://127.0.0.1:5183/paper.html#/capabilities` (merge `641a49d9`). Developer gallery :5179 left running. Evidence `/tmp/mdf19-qa/`. Chrome CDP 9340. Hard reload before the dump.
+
+Demo: `marketplaceItems()` / `matrixAgents()`. Lede **68 items · 56 installed**. Badge **Demo data**.
+
+### What passed
+
+- Tabs Marketplace / Installed / Who has what. Keys **1 / 2 / 3** switch them. **/** focuses `aria-label="Search capabilities"` (the first dump accidentally sampled Notes **Search notes**; after **/** the capabilities field is focused). **n** opens dialog title **Save current selection as bundle**. Screenshot `04-bundle.png`.
+- Marketplace: 68 cards (Word documents, PDF files, PowerPoint, …). Installed table: Name / Type / Source / Used by / Actions. Matrix: Agent column + per-cap **All**, checkboxes labelled `{agent} · {cap}` (Michael · Word documents). Cmd+Enter apply is documented in the footer.
+- Dark marketplace paints. RTL screenshot `07-rtl.png`. 1024×640 marketplace screenshot `09-1024-market.png`. 0 unnamed chrome buttons. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+### B-19-1 · Who-has-what invents 24 demo seats
+
+**Flow:** `#/capabilities` → Who has what (**3**).  
+**Expected:** the matrix is the live roster (six agents on this floor: Michael, Dwight, Developer, Tester, Phyllis, Kelly).  
+**Actual:** `MATRIX_AGENT_TARGET = 30` in `model.ts`. `matrixAgents()` pads with `{ id: 'demo-agent-${n}', name: 'Agent ${n}', role: 'Demo seat' }` from **Agent 07** through **Agent 30**. Screenshot `03-matrix.png` shows Agent 07–10 under Kelly. 30 rows × ~60 columns ≈ **1800** checkboxes. Real grants drown in empty seats. Same at 1024 (`08-1024-matrix.png`).
+
+**Severity: P1** (the matrix cannot be read as who-has-what).
+
+### P2
+
+### B-19-2 · Installed Reveal / Uninstall share one name on every row
+
+**Flow:** Installed tab.  
+**Expected:** each action includes the skill (**Uninstall Word documents**).  
+**Actual:** every row is a `<Button>` with visible text **Reveal** / **Uninstall** and no per-row `aria-label`. 56 identical names. Screenshot `02-installed.png`.
+
+**Severity: P2** (a11y)
+
+### B-19-3 · Matrix columns overflow at 1280 and 1024
+
+**Flow:** Who has what, 1280×900 and 1024×640.  
+**Expected:** an obvious horizontal affordance, or a frozen Agent column plus a count of hidden caps.  
+**Actual:** headers clip (**Word docume…**, **Brand guidelin…**). At 1024 only ~12 of ~60 caps are in view (Word documents … Doc coauthoring). No column-count in the lede. Screenshots `03-matrix.png`, `08-1024-matrix.png`.
+
+**Severity: P2** (layout)
+
+### B-19-4 · Bundle control wraps under the fill buttons at 1024
+
+**Flow:** Who has what at 1024×640.  
+**Expected:** **Save current selection as bundle** stays in the toolbar with Fill row / Fill all agents.  
+**Actual:** the bundle button drops onto its own row, full-width under the agent select. Screenshot `08-1024-matrix.png`.
+
+**Severity: P2** (visual)
+
+### MDF-19 counts
+
+- P0: 0
+- P1: 1 (demo Agent 07+ pad)
+- P2: 3
+- Electron: not launched
+
