@@ -205,6 +205,7 @@
     "resetting": "重置中…",
     "eraseEverything": "抹除一切并重启",
     "nav": {
+      "appearance": "外观",
       "general": "通用",
       "prerequisites": "前置条件",
       "agentsModels": "智能体与模型",
@@ -225,6 +226,7 @@
     },
     "general": {
       "homeFolder": "主文件夹",
+      "homeFolderHelp": "已固定的 fork 主目录。更改会走「设置 → 更换主目录」并重启。",
       "environment": "环境",
       "keepAwake": "智能体运行时保持 Mac 唤醒",
       "keepAwakeDesc": "阻止显示屏休眠，让计划任务和终端准时触发。更耗电——最好接电源。",
@@ -257,7 +259,9 @@
       "advanced": "高级",
       "maxTurns": "每次运行最大轮数",
       "unlimited": "无限制",
-      "blankUnlimited": "留空 = 无限制"
+      "blankUnlimited": "留空 = 无限制",
+      "orchSpawn": "编排者可雇佣临时工",
+      "orchSpawnHelp": "开启后，编排者可以自行雇佣短命工人。"
     },
     "autonomy": {
       "autonomy": "自主权",
@@ -281,7 +285,9 @@
       "hardStopDesc": "触发时直接终止智能体，而不仅是约束。关闭 = 先引导（推荐）。",
       "killOnTrip": "触发即终止",
       "steerFirst": "先引导",
-      "saved": "已保存"
+      "saved": "已保存",
+      "agentTokenCap": "每智能体 token 上限",
+      "agentTokenCapHelp": "应用到每个新智能体的可选上限。留空则继承全场预算。"
     },
     "memory": {
       "semanticMemory": "语义记忆",
@@ -295,7 +301,34 @@
       "docCount": "已索引 {{count}} 个文档",
       "docCountPlural": "已索引 {{count}} 个文档"
     },
+    "prereq": {
+      "lede": "办公室需要的工具。缺失的会显示安装卡片。",
+      "git": "Git",
+      "gitHelp": "在智能体工作树中克隆和提交所必需。",
+      "node": "Node.js",
+      "nodeHelp": "画廊、钩子和部分引擎安装器需要它。",
+      "claude": "Claude Code",
+      "claudeHelp": "推荐的编排引擎。若缺失，会在首次运行时安装。"
+    },
+    "appearance": {
+      "lede": "主题、密度、强调色，以及可选的办公室地板。",
+      "theme": "主题",
+      "themeHelp": "浅色、深色或高对比。跟随系统即跟随操作系统。",
+      "density": "密度",
+      "densityHelp": "布局松紧：紧凑、舒适或宽松。",
+      "compact": "紧凑",
+      "comfortable": "舒适",
+      "roomy": "宽松",
+      "accent": "强调色",
+      "accentHelp": "按钮、徽章和焦点使用的高亮色。",
+      "office": "办公室视图",
+      "officeHelp": "把像素办公室地板保留为 Paper 旁的可选视图。"
+    },
     "connections": {
+      "lede": "Slack、webhook 与 REST 集成。密钥绝不会回到渲染进程。",
+      "integrations": "REST 集成",
+      "integrationsHelp": "智能体可调用、但永远看不到密钥的 API。",
+      "openTemps": "打开临时工与连接",
       "slack": "Slack",
       "slackIntegration": "Slack 集成",
       "showSlackHelp": "显示 Slack 连接步骤",
@@ -375,7 +408,16 @@
     "saved": "已保存",
     "saving": "保存中…",
     "unsavedChanges": "有未保存的更改",
-    "unsavedWarning": "你有未保存的设置。仍要关闭并放弃这些更改吗？"
+    "unsavedWarning": "你有未保存的设置。仍要关闭并放弃这些更改吗？",
+    "searchPlaceholder": "搜索设置",
+    "searchNoResults": "没有匹配的设置",
+    "review": "核对",
+    "discard": "丢弃",
+    "reviewTitle": "核对更改",
+    "reviewDesc": "在你点保存之前不会写入任何内容。",
+    "leaveTitle": "未保存的更改",
+    "saveFailed": "保存失败。没有写入任何内容。",
+    "fieldError": "输入整数，或留空。"
   },
   "commandCenter": {
     "title": "命令中心",
@@ -587,7 +629,23 @@
       "repos": "第 3 步，共 4 步 · 你的仓库",
       "reposPlain": "第 3 步，共 4 步 · 你的项目",
       "permissions": "第 4 步，共 4 步 · 权限与可靠性",
-      "done": "全部就绪"
+      "done": "全部就绪",
+      "engines": "第 1 步，共 3 步 · 引擎",
+      "workspace": "第 2 步，共 3 步 · 工作区",
+      "meet": "第 3 步，共 3 步 · 认识你的办公室"
+    },
+    "advanced": "高级 — 权限与可靠性",
+    "skipWarn": "仍然跳过 — 在安装该引擎之前编排者不会启动。",
+    "installFailed": "该引擎安装失败。",
+    "progress": "进度",
+    "meet": {
+      "lede": "给办公室起名，启动编排者，并可选择放入一个示例任务。",
+      "name": "办公室名称",
+      "nameHelp": "默认为 Vajra's Office。",
+      "sample": "为编排者添加一个示例任务",
+      "start": "启动编排者",
+      "ready": "{{name}} 已就绪。编排者运行在 {{engine}} 上。",
+      "openOffice": "打开办公室"
     },
     "persona": {
       "headline": "一个 24/7 工作的你",
@@ -651,7 +709,9 @@
       "createPick": "创建 / 选择",
       "pick": "选择",
       "notePlain": "你日常不需要打开这个文件夹——它只是应用存放笔记的地方，这样重启时什么都不会丢。",
-      "note": "把它想成「市政厅」。harness 把智能体状态固定在那里，这样重启后会话可以重新接续。"
+      "note": "把它想成「市政厅」。harness 把智能体状态固定在那里，这样重启后会话可以重新接续。",
+      "descFork": "蜂巢文件夹默认使用已固定的 fork 主目录，因此这次安装不会共用正在运行的办公室。仓库可选。",
+      "resetDefault": "使用 fork 主目录"
     },
     "orchestrator": {
       "descPlain": "{{godName}} 就是你的克隆——他读取你的请求，拆成任务，分给合适的智能体。他是楼层的老板；而你仍然是他的老板。选择用什么 AI 引擎驱动他。",

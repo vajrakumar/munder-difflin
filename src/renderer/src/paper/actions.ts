@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, StickyNote,
+  Brain, CircleDot, Home, Inbox, KeyRound, ListTodo, Puzzle, Search, Settings, StickyNote,
   Timer, UserPlus, Users, Waypoints
 } from 'lucide-react';
 import { filterActions as rankActions, highlightMatch } from './actionSearch';
@@ -169,6 +169,23 @@ export function defaultActions(opts?: {
       group: 'Connections',
       keywords: 'probe ping t',
       run: () => go('connections')
+    },
+    {
+      id: 'nav.settings',
+      label: 'Open Settings',
+      group: 'Navigate',
+      keywords: 'preferences appearance theme budget',
+      shortcut: '⌘,',
+      icon: Settings,
+      run: () => go('settings')
+    },
+    {
+      id: 'nav.onboarding',
+      label: 'Open onboarding',
+      group: 'Navigate',
+      keywords: 'setup first run wizard engines workspace',
+      icon: UserPlus,
+      run: () => go('onboarding')
     }
   ];
 }

@@ -6,6 +6,8 @@ import { Icon, type IconName } from './Icon';
 import { SpritePortrait } from './SpritePortrait';
 import { ProviderLogo } from './ProviderLogo';
 import { modelsForProvider, onboardingEngineChoices, type AgentProvider, type HarnessConfig } from '@/store/config';
+import { suggestedForkHome } from '@shared/forkHomeSuggest';
+import { APP_DISPLAY_NAME } from '@shared/forkIdentity';
 import { providerPreset } from '@shared/agentProvider';
 import {
   classifyEngineAvailability, engineAvailabilityBadge, engineAvailabilityMessage, engineBlocksOnboarding
@@ -18,7 +20,7 @@ export interface OnboardingWizardProps {
 }
 
 type Audience = 'technical' | 'non-technical';
-type Step = 'persona' | 'welcome' | 'home' | 'orchestrator' | 'repos' | 'permissions' | 'done';
+type Step = 'engines' | 'workspace' | 'meet';
 
 // First-run showcase "— the highest-value features a brand-new user should grasp
 // before any setup. Labels and copy live in i18n (two registers: `desc` for the
@@ -91,7 +93,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const { t } = useTranslation();
   // Onboarding runs before god exists in the store, so read the persisted name.
   const godName = useResolvedGodName();
-  const [step, setStep] = useState<Step>('persona');
+  const [step, setStep] = useState<Step>('engines');
   // Self-identified audience (item 1). Undefined until chosen on the first screen;
   // the rest of the wizard reads `plain` to swap copy registers.
   const [audience, setAudience] = useState<Audience | undefined>();
@@ -107,6 +109,9 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
   const [godModel, setGodModel] = useState<string | undefined>(
     providerPreset('claude').recommendedOrchestratorModel
   );
+  const [officeName, setOfficeName] = useState(APP_DISPLAY_NAME);
+  const [sampleTask, setSampleTask] = useState(false);
+  const [skippedEngine, setSkippedEngine] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
 
@@ -164,23 +169,48 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     stayAwakeOs === 'windows' ? 'ms-settings:powersleep' :
     null;
 
-  // Default-suggest a sensible harness home on first render.
-  //
-  // This used to read `window.process.env.HOME`, which is ALWAYS undefined here:
-  // the window runs with `contextIsolation: true` / `nodeIntegration: false` and
-  // the preload bridges exactly one object (`cth`), so the renderer's main world
-  // has no `process`. The suggestion therefore always collapsed to '' and the
-  // field rendered empty "— leaving the copy above promising a default the user
-  // could not accept, and Finish failing with "Pick a harness home folder first."
-  //
-  // Suggest the literal `~/HarnessAgents` instead. That is exactly the string
-  // #140's normalizeHiveHome()/expandTilde() were built to absorb: it is expanded
-  // at the config-write boundary AND at ensureHarnessHome's mkdir, so every
-  // downstream reader still sees one absolute path. No new IPC surface.
+  // MDF-48: first-run Home is the pinned fork home (FORK_HOME_DIR_NAME under
+  // the fork userData), never ~/HarnessAgents — accepting that path created a
+  // third hive beside the live office and the fork's own home.
   useEffect(() => {
-    if (!home) setHome('~/HarnessAgents');
+    if (!home) setHome(suggestedForkHome(window.cth.platform));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const DRAFT_KEY = 'cth.onboardingDraft';
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as Partial<{
+          step: Step; home: string; repos: string[]; godProvider: AgentProvider;
+          godModel: string; officeName: string; sampleTask: boolean; autoMode: boolean;
+          audience: Audience; skippedEngine: boolean;
+        }>;
+        if (d.step === 'engines' || d.step === 'workspace' || d.step === 'meet') setStep(d.step);
+        if (d.home) setHome(d.home);
+        if (Array.isArray(d.repos)) setRepos(d.repos);
+        if (d.godProvider) setGodProvider(d.godProvider);
+        if (d.godModel) setGodModel(d.godModel);
+        if (d.officeName) setOfficeName(d.officeName);
+        if (typeof d.sampleTask === 'boolean') setSampleTask(d.sampleTask);
+        if (typeof d.autoMode === 'boolean') setAutoMode(d.autoMode);
+        if (d.audience) setAudience(d.audience);
+        if (d.skippedEngine) setSkippedEngine(true);
+      }
+    } catch { /* ignore a corrupt draft */ }
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        step, home, repos, godProvider, godModel, officeName, sampleTask, autoMode, audience, skippedEngine
+      }));
+    } catch { /* noop */ }
+  }, [hydrated, step, home, repos, godProvider, godModel, officeName, sampleTask, autoMode, audience, skippedEngine]);
 
   const pickHome = async () => {
     setError(undefined);
@@ -202,13 +232,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
     setBusy(true);
     setError(undefined);
     const harnessHome = home.trim(); // whitespace-only is not a folder
-    if (!harnessHome) { setError(t('onboarding.errPickHome')); setBusy(false); setStep('home'); return; }
+    if (!harnessHome) { setError(t('onboarding.errPickHome')); setBusy(false); setStep('workspace'); return; }
     // The orchestrator step already refuses to advance on this, but a late probe
     // result can change the answer after the user has moved on. Never write a
     // godProvider that is known to be unable to boot.
-    if (engineBlocked) {
+    if (engineBlocked && !skippedEngine) {
       setError(t('onboarding.errEngineNotInstalled', { label: providerPreset(godProvider).label }));
-      setBusy(false); setStep('orchestrator'); return;
+      setBusy(false); setStep('engines'); return;
     }
     const ensure = await window.cth.ensureHarnessHome(harnessHome);
     if (!ensure.ok) {
@@ -226,6 +256,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
       godModel,
       telemetryEnabled: shareStats
     });
+    try { localStorage.removeItem('cth.onboardingDraft'); } catch { /* noop */ }
     setBusy(false);
     onComplete(next);
   };
@@ -253,19 +284,15 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
         <PixelPanel
           variant="dialog"
           title={
-            step === 'persona' ? t('onboarding.titles.persona')
-            : step === 'welcome' ? t('onboarding.titles.welcome')
-            : step === 'home' ? (plain ? t('onboarding.titles.homePlain') : t('onboarding.titles.home'))
-            : step === 'orchestrator' ? (plain ? t('onboarding.titles.orchestratorPlain') : t('onboarding.titles.orchestrator'))
-            : step === 'repos' ? (plain ? t('onboarding.titles.reposPlain') : t('onboarding.titles.repos'))
-            : step === 'permissions' ? t('onboarding.titles.permissions')
-            : t('onboarding.titles.done')
+            step === 'engines' ? t('onboarding.titles.engines', { defaultValue: 'STEP 1 OF 3 · ENGINES' })
+            : step === 'workspace' ? t('onboarding.titles.workspace', { defaultValue: 'STEP 2 OF 3 · WORKSPACE' })
+            : t('onboarding.titles.meet', { defaultValue: 'STEP 3 OF 3 · MEET YOUR OFFICE' })
           }
           noPadding
         >
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16, maxHeight: '86vh', overflowY: 'auto' }}>
 
-            {step === 'persona' && (
+            {false && step === 'meet' && audience === undefined && (
               <>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                   <div style={{
@@ -309,7 +336,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </>
             )}
 
-            {step === 'welcome' && (
+            {false && (
               <>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                   <div style={{
@@ -364,7 +391,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </>
             )}
 
-            {step === 'home' && (
+            {step === 'workspace' && (
               <>
                 <p style={{ margin: 0, lineHeight: '22px' }}>
                   {plain ? t('onboarding.home.descPlain') : t('onboarding.home.desc')}
@@ -388,7 +415,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </>
             )}
 
-            {step === 'orchestrator' && (
+            {step === 'engines' && (
               <>
                 <p style={{ margin: 0, lineHeight: '22px' }}>
                   {plain ? t('onboarding.orchestrator.descPlain') : t('onboarding.orchestrator.desc')}
@@ -543,6 +570,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         </PixelButton>
                       )}
                     </div>
+                    {selectedEngine.installCommand ? (
+                      <code style={{ fontSize: 11, overflowWrap: 'anywhere' }}>{selectedEngine.installCommand}</code>
+                    ) : null}
+                    <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12 }}>
+                      <input type="checkbox" checked={skippedEngine} onChange={(e) => setSkippedEngine(e.target.checked)} />
+                      {t('onboarding.skipWarn', { defaultValue: 'Skip anyway — the orchestrator will not start until this engine is installed.' })}
+                    </label>
                   </div>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -563,7 +597,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </>
             )}
 
-            {step === 'repos' && (
+            {step === 'workspace' && (
               <>
                 <p style={{ margin: 0, lineHeight: '22px' }}>
                   {plain ? t('onboarding.repos.descPlain') : t('onboarding.repos.desc')}
@@ -610,8 +644,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               </>
             )}
 
-            {step === 'permissions' && (
-              <>
+            {step === 'workspace' && (
+              <details>
+                <summary style={{ cursor: 'pointer', fontFamily: 'var(--cth-font-display)', fontSize: 10, color: 'var(--cth-ink-700)' }}>
+                  {t('onboarding.advanced', { defaultValue: 'Advanced — permissions and reliability' })}
+                </summary>
                 {/* AUTONOMY — merged from the old "auto mode" step (item 5). One choice
                     that maps to each engine's flag (item 6): autoMode → claude
                     bypassPermissions / codex -a never -s workspace-write (sandbox kept),
@@ -729,6 +766,40 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                     )}
                   </div>
                 </div>
+              </details>
+            )}
+
+            {step === 'meet' && (
+              <>
+                <p style={{ margin: 0, lineHeight: '22px' }}>
+                  {t('onboarding.meet.lede', { defaultValue: 'Name the office, start the orchestrator, and optionally drop in a sample task.' })}
+                </p>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontFamily: 'var(--cth-font-display)', fontSize: 10, color: 'var(--cth-ink-700)' }}>
+                    {t('onboarding.meet.name', { defaultValue: 'Office name' })}
+                  </span>
+                  <input value={officeName} onChange={(e) => setOfficeName(e.target.value)} placeholder={APP_DISPLAY_NAME} style={inputStyle} />
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <PersonaCard
+                    icon="code"
+                    title={t('onboarding.persona.technicalTitle')}
+                    desc={t('onboarding.persona.technicalDesc')}
+                    selected={audience !== 'non-technical'}
+                    onClick={() => { setAudience('technical'); setError(undefined); }}
+                  />
+                  <PersonaCard
+                    icon="sparkle"
+                    title={t('onboarding.persona.nonTechnicalTitle')}
+                    desc={t('onboarding.persona.nonTechnicalDesc')}
+                    selected={audience === 'non-technical'}
+                    onClick={() => { setAudience('non-technical'); setError(undefined); }}
+                  />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                  <input type="checkbox" checked={sampleTask} onChange={(e) => setSampleTask(e.target.checked)} />
+                  {t('onboarding.meet.sample', { defaultValue: 'Add a sample task for the orchestrator' })}
+                </label>
               </>
             )}
 
@@ -747,46 +818,35 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
               <Dots step={step} />
               <div style={{ display: 'flex', gap: 8 }}>
-                {step !== 'persona' && step !== 'welcome' && (
+                {step !== 'engines' && (
                   <PixelButton variant="ghost" size="md" onClick={() => setStep(prevStep(step))} disabled={busy}>
                     {t('common.back')}
                   </PixelButton>
                 )}
-                {step === 'welcome' && (
-                  <PixelButton variant="ghost" size="md" onClick={() => setStep('persona')} disabled={busy}>
-                    {t('common.back')}
-                  </PixelButton>
-                )}
-                {step !== 'permissions' && (
+                {step !== 'meet' && (
                   <PixelButton
                     variant="primary"
                     size="md"
                     onClick={() => {
-                      // Validate the home step HERE. Without this the only check
-                      // lives in finish(), so an empty field walks you through all
-                      // four steps and then bounces you back to step 1 to be told.
-                      if (step === 'home' && !home.trim()) {
+                      if (step === 'workspace' && !home.trim()) {
                         setError(t('onboarding.errPickHome'));
                         return;
                       }
-                      // Same idea for the engine: refuse here, with the reason on
-                      // screen, instead of letting a pick that cannot boot through
-                      // to a Michael that never starts.
-                      if (step === 'orchestrator' && engineBlocked) {
-                        setError(`${providerPreset(godProvider).label} is not installed. Install it and press "check again", or pick another engine.`);
+                      if (step === 'engines' && engineBlocked && !skippedEngine) {
+                        setError(`${providerPreset(godProvider).label} is not installed. Install it and press "check again", pick another engine, or skip with a warning.`);
                         return;
                       }
                       setError(undefined);
                       setStep(nextStep(step));
                     }}
-                    disabled={(step === 'persona' && !audience) || (step === 'orchestrator' && engineBlocked)}
+                    disabled={step === 'engines' && engineBlocked && !skippedEngine}
                   >
-                    {step === 'welcome' ? t('onboarding.permissions.setItUp') : t('common.next')}
+                    {t('common.next')}
                   </PixelButton>
                 )}
-                {step === 'permissions' && (
+                {step === 'meet' && (
                   <PixelButton variant="primary" size="md" onClick={finish} disabled={busy}>
-                    {busy ? t('common.saving') : t('common.finish')}
+                    {busy ? t('common.saving') : t('onboarding.meet.start', { defaultValue: 'Start the orchestrator' })}
                   </PixelButton>
                 )}
               </div>
@@ -873,7 +933,7 @@ function ToggleRow({ icon, label, desc, on, tint, edge, onChange }: {
 }
 
 function Dots({ step }: { step: Step }) {
-  const order: Step[] = ['persona', 'welcome', 'home', 'orchestrator', 'repos', 'permissions'];
+  const order: Step[] = ['engines', 'workspace', 'meet'];
   return (
     <div style={{ display: 'flex', gap: 4 }}>
       {order.map((s) => (
@@ -888,20 +948,10 @@ function Dots({ step }: { step: Step }) {
 }
 
 function nextStep(s: Step): Step {
-  return s === 'persona' ? 'welcome'
-    : s === 'welcome' ? 'home'
-    : s === 'home' ? 'orchestrator'
-    : s === 'orchestrator' ? 'repos'
-    : s === 'repos' ? 'permissions'
-    : 'done';
+  return s === 'engines' ? 'workspace' : 'meet';
 }
 function prevStep(s: Step): Step {
-  return s === 'permissions' ? 'repos'
-    : s === 'repos' ? 'orchestrator'
-    : s === 'orchestrator' ? 'home'
-    : s === 'home' ? 'welcome'
-    : s === 'welcome' ? 'persona'
-    : 'persona';
+  return s === 'meet' ? 'workspace' : 'engines';
 }
 
 const inputStyle: React.CSSProperties = {
