@@ -155,7 +155,7 @@ function Overview({ info, line, cost, current, tasks, mailCount }: {
         <Row label="Model"><span className="pa-mono">{info.model ?? '—'}</span></Row>
         <Row label="Workspace"><span className="pa-mono" title={info.cwd}>{info.cwd ?? '—'}</span></Row>
         <Row label="Worktree"><span className="pa-mono" title={info.worktree}>{info.worktree ?? 'Shared folder'}</span></Row>
-        <Row label="Current card">{current ? <a href={hrefFor('tasks')}><span className="pc-key">{current.key}</span> {current.title}</a> : 'None'}</Row>
+        <Row label="Current card">{current ? <a href={hrefFor('tasks', current.key)}><span className="pc-key">{current.key}</span> {current.title}</a> : 'None'}</Row>
         <Row label="Open cards">{open}</Row>
         <Row label="Messages">{mailCount}</Row>
         {cost ? <Row label="Spend today">{cost}</Row> : null}
@@ -219,7 +219,7 @@ function TaskList({ tasks, name }: { tasks: PaperTask[]; name: string }): JSX.El
     <ul className="pa-tasks">
       {tasks.map((t) => (
         <li key={t.id} className="pa-task" data-status={t.status}>
-          <span className="pc-key">{t.key}</span>
+          <a className="pc-key" href={hrefFor('tasks', t.key)}>{t.key}</a>
           <span className="pa-task-title">{t.title}</span>
           <Badge tone={STATUS_TONE[t.status]}>{STATUS_LABEL[t.status]}</Badge>
         </li>

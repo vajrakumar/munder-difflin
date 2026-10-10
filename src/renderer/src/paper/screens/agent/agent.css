@@ -173,6 +173,11 @@
 .pa-task:hover { background: var(--paper-surface-hover); }
 .pa-task[data-status="done"] .pa-task-title { color: var(--paper-text-muted); }
 .pa-task-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pa-task a.pc-key, .pa-dl a {
+  color: var(--paper-accent-11);
+  text-decoration: none;
+}
+.pa-task a.pc-key:hover, .pa-dl a:hover { text-decoration: underline; }
 
 @container screen (max-width: 760px) {
   .pa-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(260px, 1fr) minmax(0, 1fr); }

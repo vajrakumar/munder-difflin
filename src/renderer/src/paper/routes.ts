@@ -14,6 +14,8 @@ export type PaperLocation = {
   route: PaperRoute;
   agentId?: string;
   noteId?: string;
+  /** Ticket key or id, from `#/tasks/MDF-16`. */
+  taskId?: string;
 };
 
 export const NAV: Array<{ id: PaperRoute; label: string; hint?: string }> = [
@@ -31,6 +33,7 @@ export function parseHash(hash: string): PaperLocation {
   const [head, rest] = raw.split('/');
   if (head === 'agent' && rest) return { route: 'agent', agentId: rest };
   if (head === 'notes' && rest) return { route: 'notes', noteId: rest };
+  if (head === 'tasks' && rest) return { route: 'tasks', taskId: decodeURIComponent(rest) };
   const ids = new Set(NAV.map((n) => n.id));
   ids.add('home');
   ids.add('notes');
@@ -41,6 +44,7 @@ export function parseHash(hash: string): PaperLocation {
 export function hrefFor(route: PaperRoute, id?: string): string {
   if (route === 'agent' && id) return `#/agent/${id}`;
   if (route === 'notes' && id) return `#/notes/${id}`;
+  if (route === 'tasks' && id) return `#/tasks/${encodeURIComponent(id)}`;
   if (route === 'home') return '#/';
   return `#/${route}`;
 }
