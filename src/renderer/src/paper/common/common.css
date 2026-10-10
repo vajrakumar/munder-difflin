@@ -39,7 +39,7 @@
 /* Shared small pieces */
 .pc-key {
   font-family: var(--paper-font-mono);
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   letter-spacing: 0.01em;
   color: var(--paper-text-muted);
   font-variant-numeric: tabular-nums;
@@ -60,7 +60,7 @@
   padding: 0 8px;
   border-radius: var(--paper-radius-full);
   border: 1px solid var(--paper-border);
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   font-weight: var(--paper-weight-medium);
   color: var(--paper-text-muted);
 }

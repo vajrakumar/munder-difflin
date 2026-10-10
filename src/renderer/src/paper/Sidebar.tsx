@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -7,6 +7,7 @@ import {
   Home,
   Inbox,
   ListTodo,
+  MoreHorizontal,
   Plus,
   Puzzle,
   StickyNote,
@@ -14,7 +15,11 @@ import {
   Brain,
   Users
 } from 'lucide-react';
-import { Avatar, Badge, Button, HoverCard, IconButton, Input, StatusRing, Tooltip } from '@/ui';
+import {
+  Avatar, Badge, HoverCard, IconButton, Input,
+  Menu, MenuCheckboxItem, MenuContent, MenuTrigger,
+  StatusRing, Tooltip
+} from '@/ui';
 import type { PaperAgent, PaperNote, PaperProject } from './demoData';
 import { NAV, hrefFor, type PaperRoute } from './routes';
 
@@ -184,6 +189,37 @@ export function Sidebar({
   inboxCount?: number;
 }): JSX.Element {
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [notesH, setNotesH] = useState(() => {
+    try { return Number(localStorage.getItem('paper.notesHeight')) || 168; } catch { return 168; }
+  });
+  const [notesOpen, setNotesOpen] = useState(() => {
+    try { return localStorage.getItem('paper.notesCollapsed') !== '1'; } catch { return true; }
+  });
+  const splitDrag = useRef(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  const persistNotes = useCallback((h: number) => {
+    try { localStorage.setItem('paper.notesHeight', String(h)); } catch { /* noop */ }
+  }, []);
+
+  const onSplitDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    splitDrag.current = true;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+
+  const onSplitMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!splitDrag.current || !sidebarRef.current) return;
+    const rect = sidebarRef.current.getBoundingClientRect();
+    const next = Math.min(Math.max(rect.bottom - e.clientY, 132), Math.max(132, rect.height - 220));
+    setNotesH(next);
+  }, []);
+
+  const onSplitUp = useCallback(() => {
+    if (!splitDrag.current) return;
+    splitDrag.current = false;
+    persistNotes(notesH);
+  }, [notesH, persistNotes]);
+
   const shownNotes = notes.filter((n) => {
     const q = noteQuery.trim().toLowerCase();
     if (!q) return true;
@@ -203,8 +239,10 @@ export function Sidebar({
 
   return (
     <aside
+      ref={sidebarRef}
       className="paper-sidebar"
       data-collapsed={collapsed ? 'true' : undefined}
+      data-notes-open={notesOpen ? 'true' : undefined}
       onDragStart={(e) => {
         const from = e.dataTransfer.getData('text/agent-id');
         if (from) setDraggingId(from);
@@ -216,6 +254,20 @@ export function Sidebar({
       }}
       onDragEnd={() => setDraggingId(null)}
     >
+      <div className="paper-sidebar-head">
+        <Menu>
+          <MenuTrigger asChild>
+            <IconButton label="Sidebar menu" size="sm">
+              <MoreHorizontal size={16} />
+            </IconButton>
+          </MenuTrigger>
+          <MenuContent>
+            <MenuCheckboxItem checked={agentsOnly} onCheckedChange={onAgentsOnly}>
+              Agents & notes only
+            </MenuCheckboxItem>
+          </MenuContent>
+        </Menu>
+      </div>
       {agentsOnly ? null : (
         <nav className="paper-sidebar-nav" aria-label="Workspace">
           <a
@@ -303,7 +355,25 @@ export function Sidebar({
         })}
       </div>
 
-      <div className="paper-sidebar-notes">
+      {collapsed ? null : (
+        <div
+          className="paper-notes-split"
+          role="separator"
+          aria-orientation="horizontal"
+          aria-valuenow={Math.round(notesH)}
+          aria-label="Resize notes"
+          tabIndex={0}
+          onPointerDown={onSplitDown}
+          onPointerMove={onSplitMove}
+          onPointerUp={onSplitUp}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp') setNotesH((h) => { const n = Math.min(h + 16, 360); persistNotes(n); return n; });
+            if (e.key === 'ArrowDown') setNotesH((h) => { const n = Math.max(h - 16, 132); persistNotes(n); return n; });
+          }}
+        />
+      )}
+
+      <div className="paper-sidebar-notes" style={collapsed || !notesOpen ? undefined : { flex: `0 1 ${notesH}px` }}>
         <div className="paper-notes-head">
           <a
             className="paper-nav"
@@ -315,12 +385,25 @@ export function Sidebar({
             {collapsed ? null : 'Notes'}
           </a>
           {collapsed ? null : (
-            <IconButton label="New note" size="sm" onClick={onNewNote}>
-              <Plus size={14} />
-            </IconButton>
+            <>
+              <IconButton
+                label={notesOpen ? 'Collapse notes' : 'Expand notes'}
+                size="sm"
+                onClick={() => {
+                  const next = !notesOpen;
+                  setNotesOpen(next);
+                  try { localStorage.setItem('paper.notesCollapsed', next ? '0' : '1'); } catch { /* noop */ }
+                }}
+              >
+                {notesOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </IconButton>
+              <IconButton label="New note" size="sm" onClick={onNewNote}>
+                <Plus size={14} />
+              </IconButton>
+            </>
           )}
         </div>
-        {collapsed ? null : (
+        {collapsed || !notesOpen ? null : (
           <>
             <Input
               className="paper-notes-search"
@@ -347,30 +430,6 @@ export function Sidebar({
               )}
             </div>
           </>
-        )}
-      </div>
-
-      <div className="paper-sidebar-footer">
-        {collapsed ? (
-          <Tooltip content={agentsOnly ? 'Show full nav' : 'Agents and notes only'}>
-            <Button
-              size="sm"
-              variant={agentsOnly ? 'primary' : 'ghost'}
-              aria-pressed={agentsOnly}
-              onClick={() => onAgentsOnly(!agentsOnly)}
-            >
-              A
-            </Button>
-          </Tooltip>
-        ) : (
-          <Button
-            size="sm"
-            variant={agentsOnly ? 'primary' : 'secondary'}
-            aria-pressed={agentsOnly}
-            onClick={() => onAgentsOnly(!agentsOnly)}
-          >
-            {agentsOnly ? 'Show full sidebar' : 'Agents & notes only'}
-          </Button>
         )}
       </div>
     </aside>

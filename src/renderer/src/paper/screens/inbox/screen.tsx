@@ -133,6 +133,10 @@ export function Screen(): JSX.Element {
     el?.scrollIntoView({ block: 'nearest' });
   }, [selectedId]);
 
+  useEffect(() => {
+    listRef.current?.focus();
+  }, []);
+
   const move = useCallback((delta: number) => {
     if (!visible.length) return;
     const i = Math.max(0, visible.findIndex((it) => it.id === selectedId));
@@ -157,18 +161,20 @@ export function Screen(): JSX.Element {
     setMobileDetail(false);
   }, []);
 
-  const onKeyDown = useCallback((e: ReactKeyboardEvent<HTMLDivElement>) => {
+  const handleKeys = useCallback((e: KeyboardEvent | ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('.paper-palette')) return;
     if (isTyping(e.target)) {
       if (e.key === 'Escape') {
-        (e.target as HTMLElement).blur();
+        target?.blur();
         listRef.current?.focus();
       }
       return;
     }
     const k = e.key;
-    if (k === 'j' || k === 'ArrowDown') { e.preventDefault(); move(1); }
-    else if (k === 'k' || k === 'ArrowUp') { e.preventDefault(); move(-1); }
+    if (k === 'j' || k === 'ArrowDown') { e.preventDefault(); move(1); listRef.current?.focus(); }
+    else if (k === 'k' || k === 'ArrowUp') { e.preventDefault(); move(-1); listRef.current?.focus(); }
     else if (k === 'e' && selected) { e.preventDefault(); toggleDone(selected); }
     else if (k === 'u' && selected) { e.preventDefault(); markRead([selected.rev], !read.has(selected.rev)); }
     else if ((k === 'r' || k === 'Enter') && selected) {
@@ -180,6 +186,12 @@ export function Screen(): JSX.Element {
     else if (k === 'Escape') { setMobileDetail(false); listRef.current?.focus(); }
     else if (/^[1-4]$/.test(k)) { e.preventDefault(); pickFolder(PRIMARY_FOLDERS[Number(k) - 1]); }
   }, [move, selected, toggleDone, markRead, read, pickFolder]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => handleKeys(e);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleKeys]);
 
   // Group rows by day for the list.
   const groups = useMemo(() => {
@@ -196,7 +208,7 @@ export function Screen(): JSX.Element {
   const folderTitle = COPY.folders[folder].label;
 
   return (
-    <div className="pc-screen pi-root" ref={rootRef} onKeyDown={onKeyDown} data-detail={mobileDetail ? 'open' : undefined}>
+    <div className="pc-screen pi-root" ref={rootRef} data-detail={mobileDetail ? 'open' : undefined}>
       {/* ── Folders ─────────────────────────────────────────── */}
       <nav className="pi-rail" aria-label={COPY.railLabel}>
         <div className="pi-rail-head">
@@ -220,17 +232,19 @@ export function Screen(): JSX.Element {
             <div className="pi-rail-label">{COPY.people}</div>
             <div className="pi-people">
               {people.map(({ agent, count }) => (
-                <button
-                  key={agent.id}
-                  type="button"
-                  className="pi-person"
-                  aria-pressed={agentFilter === agent.id}
-                  onClick={() => setAgentFilter((cur) => (cur === agent.id ? null : agent.id))}
-                >
-                  <StatusRing status={agent.status}><Avatar name={agent.name} size="sm" /></StatusRing>
-                  <span className="pi-person-name">{agent.name}</span>
-                  <span className="pi-count">{count}</span>
-                </button>
+                <Tooltip key={agent.id} content={`${agent.name} · ${count}`}>
+                  <button
+                    type="button"
+                    className="pi-person"
+                    aria-label={`${agent.name}, ${count} messages`}
+                    aria-pressed={agentFilter === agent.id}
+                    onClick={() => setAgentFilter((cur) => (cur === agent.id ? null : agent.id))}
+                  >
+                    <StatusRing status={agent.status}><Avatar name={agent.name} size="sm" /></StatusRing>
+                    <span className="pi-person-name">{agent.name}</span>
+                    <span className="pi-count">{count}</span>
+                  </button>
+                </Tooltip>
               ))}
             </div>
           </>
@@ -405,11 +419,13 @@ function Row({
         <span className="pi-row-subject">{item.subject}</span>
         <span className="pi-row-snippet">{item.snippet}</span>
         <span className="pi-row-tags">
-          {item.kind === 'ask' && !item.resolved ? <Badge tone="danger">{COPY.question}</Badge> : null}
+          {item.kind === 'ask' && !item.resolved ? <Badge>{COPY.question}</Badge> : null}
           {item.kind === 'ask' && item.resolved ? <Badge tone="success">{item.qa.a ? COPY.answered : COPY.dismissed}</Badge> : null}
-          {item.kind === 'thread' && item.needsYou ? <Badge tone="warning">{COPY.needsReply}</Badge> : null}
+          {item.kind === 'thread' && item.needsYou ? <Badge tone="danger">{COPY.needsReply}</Badge> : null}
           {item.kind === 'thread' ? <span className="pi-act" data-act={item.last.act}>{ACT_LABEL[item.last.act]}</span> : null}
-          {item.kind === 'thread' && item.ticket ? <span className="pc-key">{item.ticket}</span> : null}
+          {item.kind === 'thread' && item.ticket ? (
+            <a className="pc-key pi-ticket" href={`#/tasks/${encodeURIComponent(item.ticket)}`}>{item.ticket}</a>
+          ) : null}
         </span>
       </span>
       {!(item.kind === 'ask' && item.resolved) ? (
@@ -448,7 +464,13 @@ function ListSkeleton(): JSX.Element {
 function ListEmpty({ folder, filtered }: { folder: Folder; filtered: boolean }): JSX.Element {
   const c = filtered ? COPY.emptyFiltered : COPY.empty[folder];
   const Icon = FOLDER_ICON[folder];
-  return <EmptyState icon={<Icon size={24} aria-hidden="true" />} title={c.title} description={c.body} />;
+  return (
+    <EmptyState
+      icon={<Icon size={24} aria-hidden="true" />}
+      title={c.title}
+      description={`${c.body} j/k to move.`}
+    />
+  );
 }
 
 // ─── Detail ────────────────────────────────────────────────────────────────
@@ -521,6 +543,12 @@ function Composer({
 }): JSX.Element {
   const [text, setText] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const fit = (el: HTMLTextAreaElement | null): void => {
+    if (!el) return;
+    el.style.height = 'auto';
+    const max = 20 * 8 + 24;
+    el.style.height = `${Math.min(max, el.scrollHeight)}px`;
+  };
   const submit = async (): Promise<void> => {
     const body = text.trim();
     if (!body || state === 'sending') return;
@@ -547,13 +575,20 @@ function Composer({
         </div>
       ) : null}
       <textarea
-        ref={composerRef}
-        className="pc-textarea"
-        rows={3}
+        ref={(el) => {
+          (composerRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
+          fit(el);
+        }}
+        className="pc-textarea pi-composer-input"
+        rows={2}
         value={text}
         placeholder={placeholder}
         aria-label={placeholder}
-        onChange={(e) => { setText(e.target.value); if (state !== 'sending') setState('idle'); }}
+        onChange={(e) => {
+          setText(e.target.value);
+          if (state !== 'sending') setState('idle');
+          fit(e.currentTarget);
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(); }
         }}
@@ -668,7 +703,7 @@ function ThreadDetail({ item, agents, composerRef }: { item: ThreadItem; agents:
                   {COPY.earlier(hidden)}
                 </button>
               ) : null}
-              <Letter mail={m} agents={agents} />
+              <Letter mail={m} agents={agents} hideSubject={m.subject === item.subject} />
             </li>
           ))}
         </ol>
@@ -685,7 +720,7 @@ function ThreadDetail({ item, agents, composerRef }: { item: ThreadItem; agents:
   );
 }
 
-function Letter({ mail, agents }: { mail: PaperMail; agents: PaperAgent[] }): JSX.Element {
+function Letter({ mail, agents, hideSubject }: { mail: PaperMail; agents: PaperAgent[]; hideSubject?: boolean }): JSX.Element {
   const mine = mail.from === HUMAN_ID;
   return (
     <article className="pi-letter" data-mine={mine || undefined}>
@@ -698,7 +733,7 @@ function Letter({ mail, agents }: { mail: PaperMail; agents: PaperAgent[] }): JS
         <span className="pi-act" data-act={mail.act}>{ACT_LABEL[mail.act]}</span>
         <time dateTime={mail.createdAt} title={fullStamp(mail.createdAt)} className="pi-letter-time">{relative(mail.createdAt)}</time>
       </header>
-      {mail.subject && !/^re:/i.test(mail.subject) ? <h3 className="pi-letter-subject">{mail.subject}</h3> : null}
+      {mail.subject && !hideSubject && !/^re:/i.test(mail.subject) ? <h3 className="pi-letter-subject">{mail.subject}</h3> : null}
       <RichText text={mail.body} />
     </article>
   );

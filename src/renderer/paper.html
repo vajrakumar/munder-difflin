@@ -5,6 +5,17 @@
     <title>Paper shell</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>html, body, #root { height: 100%; margin: 0; }</style>
+    <script>
+      (function () {
+        try {
+          var p = localStorage.getItem('paper.themePref') || 'system';
+          var t = p === 'system'
+            ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : p;
+          if (t === 'dark' || t === 'hc' || t === 'light') document.documentElement.dataset.paperTheme = t;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

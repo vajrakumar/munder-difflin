@@ -72,7 +72,7 @@
   font-size: var(--paper-text-sm);
 }
 .ph-tile-role {
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -92,7 +92,7 @@
   align-items: center;
   gap: 8px;
   margin-top: auto;
-  font-size: 11px;
+  font-size: var(--paper-text-xs);
   color: var(--paper-text-muted);
 }
 .ph-tile-cost { margin-inline-start: auto; font-variant-numeric: tabular-nums; }

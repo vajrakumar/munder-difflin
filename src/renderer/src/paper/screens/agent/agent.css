@@ -168,7 +168,7 @@
 .pa-row dt { color: var(--paper-text-muted); }
 .pa-row dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .pa-row a { color: inherit; }
-.pa-mono { font-family: var(--paper-font-mono); font-size: 12px; }
+.pa-mono { font-family: var(--paper-font-mono); font-size: var(--paper-text-xs); }
 
 .pa-budget { margin-block-start: 20px; }
 .pa-budget-head {

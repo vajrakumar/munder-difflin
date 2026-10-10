@@ -133,7 +133,7 @@ High contrast uses rings instead of blur so structure survives Windows HC and pr
 
 **Motion:** 120 fast (hover) · 200 base (panels) · 320 slow (page). Easing `cubic-bezier(0.2, 0, 0, 1)`. Under `prefers-reduced-motion`, all three durations collapse to `0.01ms`.
 
-**Focus:** `--paper-focus-ring` is a double ring (surface + accent). Never `outline: none` without replacing it.
+**Focus:** `--paper-focus-ring` is a double ring (surface + accent). Never `outline: none` without replacing it. The command-palette search field is the exception: it keeps `outline: none` and shows focus with its accent bottom border.
 
 ---
 

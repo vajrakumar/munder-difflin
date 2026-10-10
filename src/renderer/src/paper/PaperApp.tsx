@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PanelRight } from 'lucide-react';
-import { applyPaperTheme, paperThemeFromRoot, type PaperTheme } from '@/design/paper';
-import { Avatar, Badge, Button, EmptyState, IconButton, Kbd, StatusRing, Tooltip, TooltipProvider } from '@/ui';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Mic, Moon, PanelRight, Sun, SunMoon, User } from 'lucide-react';
+import {
+  Avatar, Badge, EmptyState, IconButton, Kbd,
+  Menu, MenuContent, MenuItem, MenuRadioGroup, MenuRadioItem, MenuSeparator, MenuTrigger,
+  Sheet, SheetContent, StatusRing, Tooltip, TooltipProvider
+} from '@/ui';
 import { APP_DISPLAY_NAME } from '@shared/forkIdentity';
 import { setClassicUi } from './classicFlag';
 import { CommandPalette, useCommandPaletteHotkey } from './CommandPalette';
@@ -12,6 +15,8 @@ import { Screen as OrchestratorScreen } from './screens/orchestrator/screen';
 import { useInboxNeedsYou } from './screens/inbox/badge';
 import { Sidebar } from './Sidebar';
 import { ProSidebarProvider, useProSidebar } from './sidebarState';
+import { floorStatusLine, spendTodayLabel } from './statusLine';
+import { applyPref, readThemePref, resolvedTheme, systemIsDark, writeThemePref, type PaperThemePref } from './themePref';
 import './shell.css';
 
 function screenCopy(route: PaperRoute, agentName?: string): { title: string; lede: string } {
@@ -37,6 +42,19 @@ function screenCopy(route: PaperRoute, agentName?: string): { title: string; led
   return map[route];
 }
 
+function defaultInspector(route: PaperRoute): boolean {
+  return route !== 'inbox';
+}
+
+function readInspectorMap(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem('paper.inspectorByRoute');
+    return raw ? JSON.parse(raw) as Record<string, boolean> : {};
+  } catch {
+    return {};
+  }
+}
+
 export function PaperApp(): JSX.Element {
   return (
     <ProSidebarProvider>
@@ -47,26 +65,43 @@ export function PaperApp(): JSX.Element {
 
 function PaperShell(): JSX.Element {
   const [loc, setLoc] = useState(() => parseHash(window.location.hash));
-  const [theme, setTheme] = useState<PaperTheme>(() => paperThemeFromRoot());
+  const [themePref, setThemePref] = useState<PaperThemePref>(readThemePref);
+  const [systemDark, setSystemDark] = useState(systemIsDark);
   const [sidebar, setSidebar] = useState(() => {
     try { return Number(localStorage.getItem('paper.sidebarWidth')) || 280; } catch { return 280; }
   });
-  const [inspector, setInspector] = useState(true);
+  const [inspectorMap, setInspectorMap] = useState(readInspectorMap);
   const [palette, setPalette] = useState(false);
   const [noteQuery, setNoteQuery] = useState('');
+  const [shellWidth, setShellWidth] = useState(() => window.innerWidth);
   const drag = useRef(false);
   const rail = useProSidebar();
   const needsYou = useInboxNeedsYou();
   useCommandPaletteHotkey(() => setPalette((v) => !v));
 
+  const theme = resolvedTheme(themePref, systemDark);
+
+  useLayoutEffect(() => {
+    applyPref(themePref, systemDark);
+  }, [themePref, systemDark]);
+
   useEffect(() => {
-    applyPaperTheme(theme);
-  }, [theme]);
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onMq = (): void => setSystemDark(mq.matches);
+    mq.addEventListener('change', onMq);
+    return () => mq.removeEventListener('change', onMq);
+  }, []);
 
   useEffect(() => {
     const onHash = (): void => setLoc(parseHash(window.location.hash));
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  useEffect(() => {
+    const onResize = (): void => setShellWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const onHandle = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -93,11 +128,29 @@ function PaperShell(): JSX.Element {
     [loc.route, agent?.name]
   );
   const collapsed = sidebar <= 72;
-  const liveCount = rail.agents.filter((a) =>
-    a.status === 'working' || a.status === 'thinking' || a.status === 'looping'
-  ).length;
-  const askedCount = rail.agents.filter((a) => a.askedYou).length;
+  const statusLine = floorStatusLine(rail.agents);
+  const spend = spendTodayLabel(rail.agents);
   const Screen = isGodRoom(loc) ? OrchestratorScreen : SCREENS[loc.route];
+
+  const inspectorWanted = inspectorMap[loc.route] ?? defaultInspector(loc.route);
+  const hasSelection = Boolean(agent || note);
+  const narrow = shellWidth <= 1100;
+  const showDock = inspectorWanted && hasSelection && !narrow;
+  const showSheet = inspectorWanted && hasSelection && narrow;
+
+  function setInspectorForRoute(on: boolean): void {
+    setInspectorMap((m) => {
+      const next = { ...m, [loc.route]: on };
+      try { localStorage.setItem('paper.inspectorByRoute', JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  }
+
+  function chooseTheme(value: string): void {
+    const pref = value as PaperThemePref;
+    setThemePref(pref);
+    writeThemePref(pref);
+  }
 
   function goNote(id: string): void {
     window.location.hash = hrefFor('notes', id);
@@ -113,16 +166,54 @@ function PaperShell(): JSX.Element {
     window.location.hash = hrefFor('notes');
   }
 
-  const extraActions = rail.notes.map((n) => ({
-    id: `note.${n.id}`,
-    label: `Note: ${n.title || 'Untitled'}`,
-    group: 'Notes',
-    run: () => goNote(n.id)
-  }));
+  const extraActions = [
+    ...rail.notes.map((n) => ({
+      id: `note.${n.id}`,
+      label: `Note: ${n.title || 'Untitled'}`,
+      group: 'Notes',
+      run: () => goNote(n.id)
+    })),
+    {
+      id: 'sidebar.agentsOnly',
+      label: rail.agentsOnly ? 'Show full sidebar' : 'Agents & notes only',
+      group: 'View',
+      keywords: 'compact rail hide nav',
+      run: () => rail.setAgentsOnly(!rail.agentsOnly)
+    }
+  ];
+
+  const inspectorBody = agent ? (
+    <>
+      <h2>{agent.name}</h2>
+      <div className="paper-inspector-agent">
+        <StatusRing status={agent.status}>
+          <Avatar name={agent.name} />
+        </StatusRing>
+        <p className="lede">{agent.line}</p>
+        {agent.askedYou ? <Badge tone="danger">Asked you</Badge> : null}
+        {agent.ticket ? (
+          <p>
+            <a className="pc-key pi-ticket" href={`#/tasks/${encodeURIComponent(agent.ticket.key)}`}>
+              {agent.ticket.key}
+            </a>{' '}
+            {agent.ticket.title}
+          </p>
+        ) : null}
+      </div>
+    </>
+  ) : note ? (
+    <>
+      <h2>Note</h2>
+      <p className="lede">{note.title}</p>
+      <p>{note.body.slice(0, 180) || 'Empty'}</p>
+    </>
+  ) : null;
+
+  const ThemeIcon = themePref === 'system' ? SunMoon : theme === 'dark' ? Moon : Sun;
 
   return (
     <TooltipProvider>
-      <div className="paper-shell">
+      <div className="paper-shell" data-narrow={narrow ? 'true' : undefined}>
         <a className="paper-skip" href="#paper-main">Skip to content</a>
         <header className="paper-titlebar">
           <span className="paper-titlebar-brand">{APP_DISPLAY_NAME}</span>
@@ -131,23 +222,44 @@ function PaperShell(): JSX.Element {
             <Kbd>⌘K</Kbd>
           </button>
           <span className="paper-titlebar-spacer" />
-          <span className="paper-titlebar-meta">
-            {liveCount} live · {askedCount} asked · {rail.agents.length} agents
-          </span>
-          <Button
-            size="sm"
-            variant="ghost"
-            aria-label={`Switch theme (now ${theme})`}
-            onClick={() => setTheme((t) => (t === 'light' ? 'dark' : t === 'dark' ? 'hc' : 'light'))}
-          >
-            {theme}
-          </Button>
-          <Tooltip content="Fall back to the pixel UI">
-            <Button size="sm" variant="secondary" onClick={() => setClassicUi(true)}>
-              Classic UI
-            </Button>
+          <span className="paper-titlebar-meta">{statusLine}</span>
+          <span className="paper-titlebar-spend" title="Spend today">{spend} today</span>
+          <Menu>
+            <MenuTrigger asChild>
+              <IconButton label={`Theme (${themePref === 'system' ? 'system' : theme})`}>
+                <ThemeIcon size={16} />
+              </IconButton>
+            </MenuTrigger>
+            <MenuContent align="end">
+              <MenuRadioGroup value={themePref} onValueChange={chooseTheme}>
+                <MenuRadioItem value="system">System</MenuRadioItem>
+                <MenuRadioItem value="light">Light</MenuRadioItem>
+                <MenuRadioItem value="dark">Dark</MenuRadioItem>
+                <MenuRadioItem value="hc">High contrast</MenuRadioItem>
+              </MenuRadioGroup>
+            </MenuContent>
+          </Menu>
+          <Tooltip content="Voice (Stapler)">
+            <IconButton label="Voice" onClick={() => { window.location.hash = hrefFor('stapler'); }}>
+              <Mic size={16} />
+            </IconButton>
           </Tooltip>
-          <IconButton label={inspector ? 'Hide inspector' : 'Show inspector'} onClick={() => setInspector((v) => !v)}>
+          <Menu>
+            <MenuTrigger asChild>
+              <IconButton label="Account">
+                <User size={16} />
+              </IconButton>
+            </MenuTrigger>
+            <MenuContent align="end">
+              <MenuItem onSelect={() => setClassicUi(true)}>Classic UI</MenuItem>
+              <MenuSeparator />
+              <MenuItem onSelect={() => setPalette(true)}>Command palette</MenuItem>
+            </MenuContent>
+          </Menu>
+          <IconButton
+            label={inspectorWanted ? 'Hide inspector' : 'Show inspector'}
+            onClick={() => setInspectorForRoute(!inspectorWanted)}
+          >
             <PanelRight size={16} />
           </IconButton>
         </header>
@@ -204,40 +316,14 @@ function PaperShell(): JSX.Element {
             )}
           </main>
           <CommandPalette open={palette} onOpenChange={setPalette} extra={extraActions} />
-          {inspector ? (
-            <aside className="paper-inspector">
-              {agent ? (
-                <>
-                  <h2>{agent.name}</h2>
-                  <div className="paper-inspector-agent">
-                    <StatusRing status={agent.status}>
-                      <Avatar name={agent.name} />
-                    </StatusRing>
-                    <p className="lede">{agent.line}</p>
-                    {agent.askedYou ? <Badge tone="danger">Asked you</Badge> : null}
-                    {agent.ticket ? (
-                      <p>
-                        <Badge tone="accent">{agent.ticket.key}</Badge> {agent.ticket.title}
-                      </p>
-                    ) : null}
-                  </div>
-                </>
-              ) : note ? (
-                <>
-                  <h2>Note</h2>
-                  <p className="lede">{note.title}</p>
-                  <p>{note.body.slice(0, 180) || 'Empty'}</p>
-                </>
-              ) : (
-                <>
-                  <h2>Inspector</h2>
-                  <p className="lede">
-                    Hover an agent for ticket details. Drag to reorder. Notes live at the bottom of the rail.
-                  </p>
-                </>
-              )}
-            </aside>
+          {showDock ? (
+            <aside className="paper-inspector">{inspectorBody}</aside>
           ) : null}
+          <Sheet open={showSheet} onOpenChange={(open) => setInspectorForRoute(open)}>
+            <SheetContent title={agent?.name ?? note?.title ?? 'Inspector'}>
+              {inspectorBody}
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </TooltipProvider>

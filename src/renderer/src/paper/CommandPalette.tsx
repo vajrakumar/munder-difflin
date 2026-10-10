@@ -1,5 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { defaultActions, filterActions, type PaperAction } from './actions';
+import { Kbd } from '@/ui';
+import { defaultActions, filterActions, highlightMatch, type PaperAction } from './actions';
+
+const RECENT_KEY = 'paper.paletteRecent';
+
+function readRecent(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    return raw ? JSON.parse(raw) as string[] : [];
+  } catch {
+    return [];
+  }
+}
+
+function pushRecent(id: string): void {
+  const next = [id, ...readRecent().filter((x) => x !== id)].slice(0, 8);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* noop */ }
+}
 
 export function CommandPalette({
   open,
@@ -14,7 +31,7 @@ export function CommandPalette({
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const actions = useMemo(() => [...defaultActions(), ...extra], [extra]);
-  const shown = useMemo(() => filterActions(actions, query), [actions, query]);
+  const shown = useMemo(() => filterActions(actions, query, readRecent()), [actions, query]);
 
   useEffect(() => {
     if (!open) return;
@@ -31,6 +48,7 @@ export function CommandPalette({
   if (!open) return null;
 
   function run(a: PaperAction): void {
+    pushRecent(a.id);
     onOpenChange(false);
     a.run();
   }
@@ -48,7 +66,7 @@ export function CommandPalette({
     <div className="paper-palette-root">
       <button
         type="button"
-        className="paper-overlay"
+        className="paper-overlay paper-palette-scrim"
         tabIndex={-1}
         aria-label="Close palette"
         onClick={() => onOpenChange(false)}
@@ -95,6 +113,7 @@ export function CommandPalette({
                 {g.items.map((a) => {
                   index += 1;
                   const i = index;
+                  const Icon = a.icon;
                   return (
                     <button
                       key={a.id}
@@ -108,14 +127,28 @@ export function CommandPalette({
                       onMouseEnter={() => setActive(i)}
                       onClick={() => run(a)}
                     >
-                      <span>{a.label}</span>
-                      {a.hint ? <span className="paper-palette-hint">{a.hint}</span> : null}
+                      {Icon ? <Icon size={16} className="paper-palette-ico" aria-hidden="true" /> : null}
+                      <span className="paper-palette-label">
+                        {highlightMatch(a.label, query).map((p, k) => (
+                          p.hit ? <b key={k}>{p.text}</b> : <span key={k}>{p.text}</span>
+                        ))}
+                      </span>
+                      {a.shortcut ? (
+                        <span className="paper-palette-keys">
+                          {a.shortcut.split(' ').map((k) => <Kbd key={k}>{k}</Kbd>)}
+                        </span>
+                      ) : a.hint ? <span className="paper-palette-hint">{a.hint}</span> : null}
                     </button>
                   );
                 })}
               </div>
             ))
           )}
+        </div>
+        <div className="paper-palette-foot" aria-hidden="true">
+          <span>↑↓ to move</span>
+          <span>↵ to run</span>
+          <span>esc to close</span>
         </div>
       </div>
     </div>
