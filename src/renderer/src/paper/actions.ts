@@ -97,6 +97,56 @@ export function defaultActions(opts?: {
       keywords: 'trigger mission',
       icon: Timer,
       run: () => go('automations')
+    },
+    {
+      id: 'caps.marketplace',
+      label: 'Capabilities: Marketplace',
+      group: 'Capabilities',
+      keywords: 'skills mcp install enable catalog',
+      run: () => {
+        go('capabilities');
+        window.dispatchEvent(new CustomEvent('paper:caps', { detail: { tab: 'marketplace' } }));
+      }
+    },
+    {
+      id: 'caps.installed',
+      label: 'Capabilities: Installed',
+      group: 'Capabilities',
+      keywords: 'skills uninstall reveal',
+      run: () => {
+        go('capabilities');
+        window.dispatchEvent(new CustomEvent('paper:caps', { detail: { tab: 'installed' } }));
+      }
+    },
+    {
+      id: 'caps.matrix',
+      label: 'Capabilities: Who has what',
+      group: 'Capabilities',
+      keywords: 'matrix grants bundle apply',
+      run: () => {
+        go('capabilities');
+        window.dispatchEvent(new CustomEvent('paper:caps', { detail: { tab: 'matrix' } }));
+      }
+    },
+    {
+      id: 'caps.apply',
+      label: 'Apply capability changes',
+      group: 'Capabilities',
+      keywords: 'apply grants restart',
+      run: () => {
+        go('capabilities');
+        window.dispatchEvent(new CustomEvent('paper:caps', { detail: { tab: 'matrix', apply: true } }));
+      }
+    },
+    {
+      id: 'caps.search',
+      label: 'Search capabilities',
+      group: 'Capabilities',
+      keywords: 'find skill mcp',
+      run: () => {
+        go('capabilities');
+        window.dispatchEvent(new CustomEvent('paper:caps', { detail: { search: true } }));
+      }
     }
   ];
 }
