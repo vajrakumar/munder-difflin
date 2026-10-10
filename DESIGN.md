@@ -1,4 +1,4 @@
-# Munder Difflin — Design System (“Paper” v1)
+# Vajra — Design System (“Paper” v1)
 
 > A calm, dense, keyboard-first workspace in the class of Linear, Raycast and Arc. The office metaphor stays as an optional, polished view. Pixel art is gone from chrome: no Press Start 2P, no SNES borders, no hard 4px shadows.
 >

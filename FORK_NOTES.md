@@ -1,6 +1,6 @@
 # Fork notes — local clone of HarnessMD/munder-difflin
 
-Local working copy for the human's own Munder Difflin. Written 2026-10-10 as MDF-1.
+Local working copy for the human's own Vajra. Written 2026-10-10 as MDF-1.
 
 ## Where it lives
 
