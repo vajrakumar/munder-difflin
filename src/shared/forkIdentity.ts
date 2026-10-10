@@ -21,3 +21,18 @@ export const DEEP_LINK_SCHEME = 'munderdifflin-fork';
  *  fork would swap it for an app that reads upstream's userData. Off until the
  *  fork has its own release feed. */
 export const AUTO_UPDATE_ENABLED = false;
+
+/** Default harness home, as a folder inside the fork's userData
+ *  (~/Library/Application Support/munder-difflin-fork/harness-home). A fresh
+ *  fork never starts with no home, so it can never inherit one by accident. */
+export const FORK_HOME_DIR_NAME = 'harness-home';
+
+/** The installed upstream app's userData folder name. The fork reads its
+ *  config.json and floors/ to learn which harness homes are off limits
+ *  (src/main/forkHome.ts). Read only: the fork never writes there. */
+export const UPSTREAM_USER_DATA_DIR_NAME = 'munder-difflin';
+
+/** Grok loads every file in ~/.grok/hooks. Upstream writes munder-hive.json;
+ *  sharing that name meant whichever app ran a Grok agent last rewrote the
+ *  other's hook to point at its own hive. */
+export const GROK_HOOK_FILE_NAME = 'munder-hive-fork.json';

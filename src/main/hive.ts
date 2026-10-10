@@ -18,6 +18,7 @@
  *
  * Everything here runs in the Electron main process.
  */
+import { GROK_HOOK_FILE_NAME } from '../shared/forkIdentity';
 import {
   existsSync, mkdirSync, readFileSync, writeFileSync, renameSync,
   readdirSync, statSync, lstatSync, realpathSync, rmSync, appendFileSync,
@@ -2539,7 +2540,7 @@ export class HiveManager {
       const hookDir = join(homedir(), '.grok', 'hooks');
       mkdirSync(hookDir, { recursive: true });
       writeFileSync(
-        join(hookDir, 'munder-hive.json'),
+        join(hookDir, GROK_HOOK_FILE_NAME),
         JSON.stringify({ hooks }, null, 2),
         'utf8'
       );

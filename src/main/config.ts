@@ -12,6 +12,7 @@ import {
 import { defaultMcpDefaults } from '../shared/mcpCatalog';
 import { MAX_AGENT_TOKEN_CAP } from '../shared/tokenCaps';
 import { expandTilde, normalizeHiveHome } from './fs';
+import { checkForkHome, pinForkHome } from './forkHome';
 import type { IntegrationRecord } from '../shared/integrations';
 import {
   DEFAULT_CONTEXT_TRIGGER,
@@ -590,14 +591,30 @@ export function readConfig(): HarnessConfig {
   // No file yet = a first run with nothing to migrate; the defaults ARE the
   // post-migration shape. Deliberately does not persist — a bare read must not
   // conjure a config.json before onboarding has written one.
-  if (!existsSync(p)) return withTriggerDefaults({ ...DEFAULTS });
+  if (!existsSync(p)) return pinHome(withTriggerDefaults({ ...DEFAULTS }));
   try {
     const raw = readFileSync(p, 'utf8');
     const parsed = JSON.parse(raw);
-    return normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...parsed })));
+    return pinHome(normalizeStoredHomes(migrateTriggersV1(withTriggerDefaults({ ...DEFAULTS, ...parsed }))));
   } catch {
-    return withTriggerDefaults({ ...DEFAULTS });
+    return pinHome(withTriggerDefaults({ ...DEFAULTS }));
   }
+}
+
+/** Fork (MDF-36): every consumer of harnessHome reads it through readConfig, so
+ *  this is the one place that guarantees the fork never boots against the
+ *  installed app's hive. An empty home becomes the fork's own folder; a home the
+ *  installed app uses is replaced by it and dropped from the recents list. */
+function pinHome(cfg: HarnessConfig): HarnessConfig {
+  const userData = app.getPath('userData');
+  const appData = app.getPath('appData');
+  const { home, refused } = pinForkHome(cfg.harnessHome, userData, appData);
+  if (refused) console.warn(`[fork] refused stored harness home: ${refused}`);
+  cfg.harnessHome = home;
+  if (Array.isArray(cfg.recentHives)) {
+    cfg.recentHives = cfg.recentHives.filter((h) => checkForkHome(h, appData).ok);
+  }
+  return cfg;
 }
 
 /** (#140, the upgrade path) A config.json persisted BEFORE `writeConfig`
@@ -689,7 +706,11 @@ export function writeConfig(patch: Partial<HarnessConfig>): HarnessConfig {
   // and left the wizard wedged on its last step with no way forward. Expand BEFORE
   // the value is persisted or copied into recentHives, so every downstream reader
   // (mkdir, the hive root, the launch picker) sees one absolute path.
-  if (typeof patch.harnessHome === 'string' && patch.harnessHome) {
+  if (typeof patch.harnessHome === 'string' && patch.harnessHome && !checkForkHome(patch.harnessHome, app.getPath('appData')).ok) {
+    // Fork (MDF-36): never persist the installed app's home. Keep the current one.
+    console.warn(`[fork] refused harness home write: ${patch.harnessHome}`);
+    next.harnessHome = current.harnessHome;
+  } else if (typeof patch.harnessHome === 'string' && patch.harnessHome) {
     const { home, recentHives } = normalizeHiveHome(patch.harnessHome, current.recentHives ?? []);
     next.harnessHome = home;
     next.recentHives = recentHives;
@@ -779,6 +800,10 @@ export function modelForRole(
  *  lets the user type the path, and mkdir treats a literal `~` as a plain
  *  directory name (issue #140's `ENOENT: mkdir '~/HarnessAgents'`). */
 export function ensureHarnessHome(path: string): { ok: boolean; error?: string } {
+  // Fork (MDF-36): onboarding and config:changeHome both come through here
+  // first, so a refused home fails before anything is created or bound.
+  const check = checkForkHome(path, app.getPath('appData'));
+  if (!check.ok) return check;
   try {
     // Expand HERE too, not only at the config write (#140). This runs FIRST —
     // onboarding calls it before updateConfig — so normalizing only at the write
