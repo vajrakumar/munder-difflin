@@ -1114,3 +1114,58 @@ Left open from MDF-18 (not in this ticket): B-18-2, B-18-3, B-18-5, B-18-6, B-18
 
 No P1 reopened. No new P0/P1/P2 this pass.
 
+---
+
+## MDF-21 Settings + onboarding (paper.html#/settings, #/onboarding)
+
+Tester (`tester-mv2fnyz5`) · 2026-10-10 · **no fixes applied** · god inform conv-06556c.
+
+Browser only. Did **not** launch Electron. Gallery from the **main clone** at `http://127.0.0.1:5183/paper.html` (merge `01741907` / feat `6094945e`; MDF-48 folded). Developer gallery :5179 left running. Evidence `/tmp/mdf21-qa/`. Chrome CDP 9340. Hard reload before each route. **`#/settings/connections` left to MDF-20.**
+
+### What passed
+
+- **Settings.** Sections Appearance / General / Prerequisites / Agents & Models / Autonomy & Budgets / Connections / Voice / Memory & Knowledge. **/** focuses `aria-label="Search settings"`. Search **theme** returns the Theme field. Autonomy hash `#/settings/autonomy`. Settings › Connections uses `#/settings/connect` (does not steal MDF-20). REST integrations link is `#/settings/connections`. Dark / 1024 paint. 0 unnamed chrome buttons. Screenshot `01-settings.png` … `06-settings-1024.png`.
+- **Onboarding.** Three steps Engines → Workspace → Meet. Claude Code recommended + installed. Workspace Home folder **`~/Library/Application Support/vajras-office/harness-home`** with **Use fork home** (MDF-48). Meet office name defaults to **Vajra's Office**. **Start the orchestrator** on step 3. Screenshot `07-onboard-engines.png` … `11-onboard-dark.png`. Electron not launched.
+
+### P0
+
+None this run.
+
+### P1
+
+None this run.
+
+### P2
+
+### B-21-1 · REST integrations link says Temps
+
+**Flow:** Settings › Connections (`#/settings/connect`).  
+**Expected:** **Open REST integrations** (code `defaultValue`) or **Open Connections**.  
+**Actual:** `en.json` `settings.connections.openTemps` is **Open Temps & Connections**. The `href` is correctly `#/settings/connections`. Screenshot `04-settings-connect.png`.
+
+**Severity: P2** (copy)
+
+### B-21-2 · Onboarding progress dots have no accessible name
+
+**Flow:** `#/onboarding`. Group `aria-label="Progress"`.  
+**Expected:** each step named (Engines / Workspace / Meet).  
+**Actual:** three `<span class="po-dot">` with `data-on` / `data-done` and no `aria-label`. Dump `dots[].label` is null. They also paint as traffic-light window controls.
+
+**Severity: P2** (a11y)
+
+### B-21-3 · Onboarding **back** / **next** / **add** are sentence-case
+
+**Flow:** steps 1–2.  
+**Expected:** title-case like **Start the orchestrator**.  
+**Actual:** visible labels **back**, **next**, **add**. Screenshot `07-onboard-engines.png`, `08-onboard-workspace.png`.
+
+**Severity: P2** (visual)
+
+### MDF-21 counts
+
+- P0: 0
+- P1: 0
+- P2: 3
+- Electron: not launched
+- MDF-48 fork-home default: **verified**
+
