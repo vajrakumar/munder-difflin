@@ -391,7 +391,7 @@ function Composer({ agentId, name, canQueue }: { agentId: string; name: string; 
           className="pa-input"
           rows={2}
           value={text}
-          placeholder={`Message ${name}. Paste or drop images to attach.`}
+          placeholder={`Message ${name} · paste or drop images to attach`}
           aria-label={`Message ${name}`}
           onChange={(e) => { setText(e.target.value); if (note) setNote(null); }}
           onPaste={onPaste}

@@ -112,9 +112,9 @@ function FleetBoard(): JSX.Element {
               <span>{by[col].length}</span>
             </div>
             <ul className="po-col-list">
-              {by[col].slice(0, 8).map((t) => (
+              {by[col].map((t) => (
                 <li key={t.id}>
-                  <a className="po-card" href={hrefFor('tasks', t.key)}>
+                  <a className="po-card" href={hrefFor('tasks', t.key)} title={t.title}>
                     <span className="pc-key">{t.key}</span>
                     <span className="po-card-title">{t.title}</span>
                     <Badge tone={STATUS_TONE[t.status]}>{t.assignee ? agentName(floor.agents, t.assignee) : '—'}</Badge>
@@ -141,9 +141,12 @@ function Control(): JSX.Element {
     setNote(`Breaker → ${BREAKER_COPY[next].label}`);
   }
 
-  const fleet = DEFAULT_AGENTS.filter((a) => a.costToday);
+  const costById = new Map(DEFAULT_AGENTS.map((a) => [a.id, a.costToday]));
+  const fleet = floor.agents
+    .filter((a) => !a.archived)
+    .map((a) => ({ id: a.id, name: a.name, costToday: costById.get(a.id) ?? '$0.00' }));
   const total = fleet.reduce((s, a) => s + dollars(a.costToday), 0);
-  const max = Math.max(...fleet.map((a) => dollars(a.costToday)), 0.01);
+  const dayBudget = 10;
   const live = floor.agents.filter((a) => a.status === 'working' || a.status === 'thinking' || a.status === 'looping').length;
 
   return (
@@ -183,10 +186,10 @@ function Control(): JSX.Element {
                   role="meter"
                   aria-label={`${a.name} spend`}
                   aria-valuemin={0}
-                  aria-valuemax={max}
+                  aria-valuemax={dayBudget}
                   aria-valuenow={n}
                 >
-                  <span style={{ inlineSize: `${(n / max) * 100}%` }} />
+                  <span style={{ inlineSize: `${Math.min(100, (n / dayBudget) * 100)}%` }} />
                 </span>
                 <span className="pc-key">{a.costToday}</span>
               </li>

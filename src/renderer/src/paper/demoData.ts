@@ -45,8 +45,8 @@ export const DEFAULT_AGENTS: PaperAgent[] = [
     name: 'Michael',
     role: 'Orchestrator',
     projectId: 'office',
-    status: 'idle',
-    line: 'Waiting on the next brief',
+    status: 'working',
+    line: 'Routing the floor',
     costToday: '$0.12'
   },
   {
