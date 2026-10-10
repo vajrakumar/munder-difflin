@@ -152,7 +152,7 @@ function AutomationsScreen(): JSX.Element {
       <Tabs value={filter} onValueChange={(v) => { setFilter(v as Filter); setSelected(0); }}>
         <TabsList aria-label={t.filterLabel} className="pa-filter">
           {(['all', 'schedules', 'webhooks', 'history'] as Filter[]).map((f) => (
-            <TabsTrigger key={f} value={f}>{t.filters[f]}{f === 'history' && <Kbd>H</Kbd>}</TabsTrigger>
+            <TabsTrigger key={f} value={f} data-pa-filter={f}>{t.filters[f]}{f === 'history' && <Kbd>H</Kbd>}</TabsTrigger>
           ))}
         </TabsList>
       </Tabs>
@@ -410,8 +410,9 @@ function WebhookEditor({ t, api, draft: initial, url, onDone }: {
 }): JSX.Element {
   const toast = useToast();
   const [d, setD] = useState<Webhook>(initial);
-  const [preset, setPreset] = useState<PresetId>('custom');
-  const [sample, setSample] = useState(PRESETS.custom.sample);
+  const initialPreset = (Object.keys(PRESETS) as PresetId[]).find((k) => PRESETS[k].schema === initial.schema) ?? 'custom';
+  const [preset, setPreset] = useState<PresetId>(initialPreset);
+  const [sample, setSample] = useState(PRESETS[initialPreset].sample);
   const [reveal, setReveal] = useState(false);
   const [testing, setTesting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
